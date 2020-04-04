@@ -13,14 +13,14 @@ f_type = 'regioni'
 month_start = 2
 month_end = 3
 
-#region = 2; region_name = 'Lombardia'
+region = 2; region_name = 'Lombardia'
 #region = 4; region_name = 'Veneto'
-region = 11; region_name = 'Lazio'
+#region = 11; region_name = 'Lazio'
 #region = 6; region_name = 'Liguria'
 #region = 5; region_name = 'FriuliVeneziaGiulia'
 
-#col = 11;   title = 'Nuovi Positivi: ' + region_name; fout = 'casi_nuovi_'
-col = 14;   title = 'Casi Totali: ' + region_name; fout = 'casi_totali_'
+#col = 11;   title = 'Nuovi Positivi: ' + region_name; fout = 'output/casi_nuovi_'
+col = 14;   title = 'Casi Totali: ' + region_name; fout = 'output/casi_totali_'
 
 output_name = fout + region_name + '.png'
 
@@ -30,7 +30,7 @@ if region == 2:
 
 # Parametri Veneto
 elif region == 4:
-    R = 2.4; t0 = 14.0
+    R = 2.5; t0 = 14.0
 
 # Parametri Lazio
 elif region == 11:
