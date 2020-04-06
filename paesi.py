@@ -59,11 +59,29 @@ def lin_fit(x, a, b):
     return x * a + b
 
 
+# We determine the exponential fit value over the first two weeks
+def single_fit(x_all, y_all):
+    a0 = 1.0
+    t0 = 15.0
+    tmax = 30
+
+    n0 = np.log(y_all[0])
+    logy = np.log(y_all[0:tmax])
+
+    popt, pcov = so.curve_fit(lin_fit, x_all[:tmax], logy, p0=[n0, a0], method = 'lm')
+
+    r0 = popt[0] * t0 + 1
+    print('Approx R0: ', r0)
+
+    return r0
+    
+
 def split_sample_fit(x_all, y_all, n_pre):
     n_split = n_pre[0]
 
     a0 = 1.0
     a1 = 1.0
+    t0 = 15.0
 
     n0 = np.log(y_all[0])
     n1 = np.log(y_all[n_split])
@@ -73,8 +91,21 @@ def split_sample_fit(x_all, y_all, n_pre):
     logy1 = np.log(y_all[n_split:])
 
     popt0, pcov0 = so.curve_fit(lin_fit, x_all[:n_split], logy0, p0=[n0, a0], method='lm')   
-    print(popt0)
-    #exp0 = np.exp()
+    popt1, pcov1 = so.curve_fit(lin_fit, x_all[n_split:], logy1, p0=[n1, a1], method='lm')   
+
+    r0 = popt0[0] * t0 + 1
+    r1 = popt1[0] * t0 + 1
+
+    '''
+    print(popt0, r0)
+    print(popt1, r1)
+    '''
+
+    # Convert to R0 parameter
+    return [r0, r1]
+
+#def smooth_average():
+# TODO
 
 
 '''
@@ -95,12 +126,10 @@ all_countries = df[select_col].unique()
 offset = 30
 n_min = 20
 
-# Exponential model parameters
-r0 = 4.0
-
 #countries = ['Japan', 'Serbia', 'Spain', 'Italy']
 #countries = ['Serbia', 'Spain', 'Italy']
-countries = ['Italy']
+#countries = ['Italy']
+countries = ['Spain']
 
 x_lims = [offset, n_days]
 y_lims = [n_min, 1.e+5]
@@ -125,7 +154,9 @@ for country in countries:
     offset = deltaN
 
     # Plot against a simple exponential model
+    r0 = single_fit(days[offset:], y_data[offset:])
     y_exp = simple_exp(days, offset, n0[0], r0)
+    #print(y_exp)
 
     # Choose data type and interpolate for missing days / values
     diff_data = interp(new_cases(y_data))
@@ -133,27 +164,41 @@ for country in countries:
     #diff_data = relative_increase(y_data)
 
     # Determine deviations from the exponential regime
-    exp_thr = 1.0
+    exp_thr = 0.3
     exp_dev = abs(diff_data[offset:n_days] - y_exp) / diff_data[offset:]
     exp_day = exp_dev[exp_dev > exp_thr]
+    print(exp_dev)
 
     ind = np.where(exp_dev == exp_day[0])
     print('The deviation from the exponential regime happened on the: ', head[ind[0] + 4 + offset], ' in ', country, ', n= ', ind[0], ' days after.')
+    
+    # Determine days - interval range
+    x_thr = ind[0] + offset
+    use_days0 = days[1+offset:x_thr[0]]
+    use_days1 = days[x_thr[0]:]
     use_days = days[1+offset:]
     use_data = diff_data[offset:]
-    
+
     # Fit and check the best fit parameters
-#def split_sample_fit(x_all, y_all, n_split):
-    split_sample_fit(use_days, use_data, ind[0])
+    [R0, R1] = split_sample_fit(use_days, use_data, ind[0])
 
     # Vertical line for the actual plots
-    x_thr = ind[0] + offset
     x_line = [x_thr, x_thr]; y_line = y_lims
+
+
+    # Separate the two plots
+    N0 = (0.66 * n0[0] + 0.33 * n0[1])
+    y_exp0 = simple_exp(days[:x_thr[0]], offset, N0, R0)
+    
+    N1 = diff_data[x_thr[0]+1] 
+    y_exp1 = simple_exp(days, x_thr[0], N1, R1)
 
     # Do the actual plots
     #plt.scatter(days[1+offset:n_days], diff_data[offset:n_days], label = country, marker = 'o')
     plt.plot(use_days, use_data, label = country, marker = 'o')
-    plt.plot(use_days, y_exp)
+    plt.plot(use_days, y_exp, label = 'R0 = ' + str(r0))
+    plt.plot(use_days0, y_exp0, label = 'R0 = ' + str(R0))
+    plt.plot(use_days1[1:], y_exp1, label = 'R0 = ' + str(R1))
     plt.plot(x_line, y_line, color='black')
 
     plt.plot()
