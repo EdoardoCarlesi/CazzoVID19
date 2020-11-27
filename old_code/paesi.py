@@ -146,7 +146,8 @@ for country in countries:
 
     # Filter out first descriptive columns
     y_data = pd.to_numeric(this_row[4:n_days+3])
-
+    
+    df = pd.DataFrame(data = y_data.values, columns = ['y'], copy = False)
     n0 = y_data[y_data > n_min]
     deltaN = len(y_data) - len(n0)
 
@@ -154,17 +155,22 @@ for country in countries:
     offset = deltaN
 
     # Plot against a simple exponential model
-    r0 = single_fit(days[offset:], y_data[offset:])
+    y_data_smooth = df['y'].rolling(window = 7).mean().values
+    print('Smooth: ', y_data_smooth)
+    r0 = single_fit(days[offset:], y_data_smooth[offset:])
     y_exp = simple_exp(days, offset, n0[0], r0)
     #print(y_exp)
 
     # Choose data type and interpolate for missing days / values
     diff_data = interp(new_cases(y_data))
+    df2 = pd.DataFrame(data = diff_data, columns = ['use_data'], copy = True)
+    data_smooth = df2['use_data'].rolling(window = 10).mean()
 
     #diff_data = relative_increase(y_data)
 
     # Determine deviations from the exponential regime
-    exp_thr = 0.3
+    exp_thr = 5.0
+    #exp_dev = abs(data_smooth[offset:n_days] - y_exp) / diff_data[offset:]
     exp_dev = abs(diff_data[offset:n_days] - y_exp) / diff_data[offset:]
     exp_day = exp_dev[exp_dev > exp_thr]
     print(exp_dev)
@@ -178,7 +184,10 @@ for country in countries:
     use_days1 = days[x_thr[0]:]
     use_days = days[1+offset:]
     use_data = diff_data[offset:]
-
+    
+    df3 = pd.DataFrame(data = use_data, columns = ['use_data'], copy = True)
+    use_data_smooth = df3['use_data'].rolling(window = 5).mean()
+    
     # Fit and check the best fit parameters
     [R0, R1] = split_sample_fit(use_days, use_data, ind[0])
 
@@ -195,6 +204,7 @@ for country in countries:
 
     # Do the actual plots
     #plt.scatter(days[1+offset:n_days], diff_data[offset:n_days], label = country, marker = 'o')
+    plt.plot(use_days, use_data_smooth, label = country, marker = 'o')
     plt.plot(use_days, use_data, label = country, marker = 'o')
     plt.plot(use_days, y_exp, label = 'R0 = ' + str(r0))
     plt.plot(use_days0, y_exp0, label = 'R0 = ' + str(R0))
