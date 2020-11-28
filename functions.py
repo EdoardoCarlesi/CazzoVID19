@@ -18,7 +18,7 @@ from scipy import stats
 from copy import copy
 
 
-def gompertz(t=None, a=None, b=None, c=None, derive=False, verbose=False):
+def gompertz(t=None, a=None, b=None, c=None, derive=True, verbose=False):
     """
         Gompertz function
         This is a cumulative function, if derive == True then compute the derivative (assuming time unit = 1)

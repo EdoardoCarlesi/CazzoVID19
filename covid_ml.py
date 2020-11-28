@@ -320,10 +320,11 @@ def do_gompertz():
     #col_country = 'Sweden'
     #col_country = 'Spain'
     col_country = 'Belgium'
+    #col_country = 'Finland'
     col_date = 'date'
     col_confirmed = 'confirmed'
     n_days = 1
-    n_smooth = 9
+    n_smooth = 7
 
     covid_data = world_data()
 
@@ -339,38 +340,39 @@ def do_gompertz():
     ts = np.arange(0, t_max-t_min)
     tf = np.arange(0, t_extract-t_min)
 
-    a0=2.0
-    b0=81.0
-    c0=0.043
-
     confirm = data[col_confirmed].values[t_min:t_max]
-    confirm /= np.max(confirm)
-
-    ##popt, pcov = curve_fit(f.gompertz_fit, p0=[a0, b0, c0], xdata=ts, ydata=confirm)    
-    #print(popt)
-    #print(pcov)
-
+    confirm0 = np.max(confirm)
+    confirm /= confirm0
+ 
     intA = [1.0, 100.0]
     intB = [1.0, 500.0]
     intC = [0.00001, 0.1]
     intervals = [intA, intB, intC]
 
-    params = [a0, b0, c0]
-    params = montecarlo_fit(function=f.gompertz_fit, params=params, intervals=intervals, x=ts, y=confirm, n=50000)
-    
+    params = [1.0, 1.0, 1.0]
+    params = montecarlo_fit(function=f.gompertz_fit, params=params, intervals=intervals, x=ts, y=confirm, n=5000)
+ 
     a0 = params[0]
     b0 = params[1]
     c0 = params[2]
 
+    popt, pcov = curve_fit(f.gompertz_fit, p0=[a0, b0, c0], xdata=ts, ydata=confirm)    
+    print(f'Best fit={popt}')
+
     gp = f.gompertz(t=ts, a=a0, b=b0, c=c0, derive=True, verbose=True)
     gfut = f.gompertz(t=tf, a=a0, b=b0, c=c0, derive=True)
+    gfit = f.gompertz(t=tf, a=popt[0], b=popt[1], c=popt[2], derive=True)
 
     tmax = tf[np.argmax(gfut)]
-    print(f't_max = {tmax - t_max + t_min}')
+    print(f't_max = {tmax - t_max + t_min}, MC  n_max={confirm0 * max(gfut)}, nmax real={confirm0}')
+    print(f't_max = {tmax - t_max + t_min}, fit n_max={confirm0 * max(gfit)}')
 
+    plt.title(col_country + ' ' + str(n_smooth) + ' day average')
     plt.plot(ts, gp)
-    plt.plot(ts, confirm)
-    plt.plot(tf, gfut) 
+    plt.plot(ts, confirm, label='data')
+    plt.plot(tf, gfut, label='MC') 
+    plt.plot(tf, gfit, label='Fit') 
+    plt.legend()
     plt.show() #block=False)
     #plt.pause(7)
     #plt.close()
