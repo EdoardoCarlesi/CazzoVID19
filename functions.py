@@ -18,6 +18,38 @@ from scipy import stats
 from copy import copy
 
 
+def gompertz(t=None, a=None, b=None, c=None, derive=False, verbose=False):
+    """
+        Gompertz function
+        This is a cumulative function, if derive == True then compute the derivative (assuming time unit = 1)
+    """
+    
+    if verbose:
+        print(f'Using Gompertz function with a={a}, b={b}, c={c}')
+
+    f_t = a * np.exp(-b * np.exp( -c * t))
+    
+    if derive:
+        n = len(f_t)
+        f_t_prime = np.zeros(n)
+
+        for i in range(1, n):
+            f_t_prime[i] = f_t[i] - f_t[i-1]
+
+        return f_t_prime
+
+    else:
+        return f_t
+
+
+def gompertz_fit(t, a, b, c):
+    """
+        Gompertz curve declared in a scipy compliant form
+    """
+
+    return gompertz(t=t, a=a, b=b, c=c, derive=True)
+
+
 def prepare_data(normalize=True, data=None, split_fac=0.7, LSTM=False, date_col='date', n_days=1):
     """
         Normalize and split the data into train and test set
@@ -52,13 +84,6 @@ def prepare_data(normalize=True, data=None, split_fac=0.7, LSTM=False, date_col=
 
     return X_train, y_train, X_test, y_test
 
-
-def smooth_data(data=None, avg_days=7):
-    """
-        Smooth the data over an interval window
-    """
-
-    pass
 
 def show_plot(data=None, title=None):
     """
@@ -137,68 +162,19 @@ def interactive_plot(data=None, title=None, mode="lines", x_col='date'):
     fig.show()
 
 
-@time_total
-def generate_portfolios(data=None, w=None, n_runs=None):
-    """ 
-        Assign random asset allocations n times 
-        - data should be normalized to the starting price of each stock
-        - n_runs is the number of montecarlo trials
-    """
-
-    portfolios = pd.DataFrame()
-    portfolios['Date'] = data['Date']
-    data_cols = data.columns[1:]
-    n_cols = len(data_cols)
-
-    for i_mc in range(0, n_runs):
-
-        if w == None:
-            w = normalized_random(n_cols)
-        
-        portfolio = make_portfolio(data=data, w=w)       
-
-        key_p = 'P_' + str(i_mc)        
-        portfolios[key_p] = portfolio[data_cols].apply(lambda x: sum(x), axis = 1)
-
-    return portfolios
-
-
-def sharpe_ratio(rp=None, rf=None, sigma=None):
-    """
-        The Sharpe ratio is defined as 
-        SR = (R_p - R_f) / sigma_p
-        R_p = return of the portfolio
-        R_f = risk free return
-        sigma_p = volatility (std dev) of my portfolio
-    """
-
-    return (rp - rf) / sigma
-
-
-def beta(data=None, col_stock=None, col_market=None):
-    """
-        Beta is the basis of the CAPM model, it's the correlation between the market and a given stock
-    """
-    
-    beta, alpha = np.polyfit(data[col_market], data[col_stock], 1)
-
-    return beta, alpha
-
-
-def capm(rf=None, beta=None, rm=None):
-    """ 
-        The expected return of a security is the risk-free rate of return, plus beta (the correlation between the stock and the market) 
-        times the risk premium incentive i.e. the difference between the risk-free rate and the one of this stock.
-        Rm is the market rate of return (e.g. S&P 500)
-    """
-
-    return (rf + beta * (rm - rf))
-
-
 if __name__ == "__main__":
     """
         The main is used to test functions
     """
-    pass
+
+
+    """
+    t = np.arange(0, 100, 1)
+    f, fp = gompertz(t=t, a=1.0, b=20, c=0.1)
+    print(f)
+    print(fp)
+    plt.plot(t, fp)
+    plt.show()
+    """
 
 

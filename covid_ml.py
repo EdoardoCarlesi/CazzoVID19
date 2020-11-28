@@ -4,6 +4,7 @@ import functions as f
 
 import matplotlib.pyplot as plt
 
+from scipy.optimize import curve_fit
 from scipy import stats
 from copy import copy
 
@@ -82,7 +83,11 @@ def train_lstm(data=None, col_date='date', n_days=1, split_fac=0.7,
 
     return model, predictions
 
+
 def italian_data():
+    """
+        This function is specific only for italian regions
+    """
     pass
 
 
@@ -152,7 +157,8 @@ def world_data(country=None):
     deaths_file = 'time_series_covid19_deaths_global.csv'
     recovered_file = 'time_series_covid19_recovered_global.csv'
     confirmed_file = 'time_series_covid19_confirmed_global.csv'
-    data_confirmed = pd.read_csv(covid_path + confirmed_file)
+    #data_confirmed = pd.read_csv(covid_path + confirmed_file)
+    data_confirmed = pd.read_csv(covid_path + deaths_file)
     
     # TODO: Concatenate with deaths and recovered
     covid_data = data_confirmed
@@ -162,8 +168,8 @@ def world_data(country=None):
 
 
 def extract_country(data=None, n_days=1, col_name=None, col_country=None, col_date=None, col_confirmed=None, cumulative=True, smooth=0):
-    dates = covid_data.columns[4:]
-    row = covid_data[covid_data[col_name] == col_country].T.iloc[4:].values
+    dates = data.columns[4:]
+    row = data[data[col_name] == col_country].T.iloc[4:].values
     row = np.array(row)
     row = np.reshape(row, len(row))
 
@@ -210,9 +216,7 @@ def forward_prediction(days_fwd=1, model=None, start=None):
     return fwd
 
 
-if __name__ == "__main__":
-
-    """ MAIN PROGRAM """
+def do_lstm():
 
     col_name = 'Country/Region'
     #col_country = 'Japan'
@@ -222,12 +226,6 @@ if __name__ == "__main__":
     n_days = 1
     n_smooth = 10
 
-
-    countries = country_data()
-
-
-
-    '''
     covid_data = world_data()
     
     data = extract_country(data=covid_data, n_days=n_days, col_name=col_name, smooth=n_smooth,
@@ -280,7 +278,109 @@ if __name__ == "__main__":
     
     #print(pred)
     print(forward)
-    '''
+ 
+
+def montecarlo_fit(function=None, params=None, intervals=None, x=None, y=None, n=10000):
+    
+    print(f'Fitting {function.__name__} with MC method...')
+    n_p = len(params)
+    params_mc = np.zeros((n, n_p))
+    err_mc = np.zeros(n)
+
+    #print(intervals[2])
+    intervals[2][0] = np.log(intervals[2][0])
+    intervals[2][1] = np.log(intervals[2][1])
+
+    #print(intervals[2])
+    #print(np.exp(intervals[2]))
+
+    for i in range(0, n_p):
+        params_mc[:, i] = np.random.uniform(low=intervals[i][0], high=intervals[i][1], size=n)
+
+    params_mc[:, i] = np.exp(params_mc[:, i])
+
+    for j in range(0, n):
+        #print(params_mc[j])
+        #this_y = function(x, params_mc[j,0], params_mc[j,1], params_mc[j,2])
+        this_y = function(x, *params_mc[j,:]) #, params_mc[j,1], params_mc[j,2])
+        err_mc[j] = np.std(abs(this_y - y))
+
+    params = params_mc[np.argmin(err_mc)]
+
+    print(f'ErrMin: {min(err_mc)}, ErrMax: {max(err_mc)} with params={params}')
+    return params
 
 
+def do_gompertz():
+
+    col_name = 'Country/Region'
+    #col_country = 'Japan'
+    #col_country = 'Italy'
+    #col_country = 'Russia'
+    #col_country = 'Sweden'
+    #col_country = 'Spain'
+    col_country = 'Belgium'
+    col_date = 'date'
+    col_confirmed = 'confirmed'
+    n_days = 1
+    n_smooth = 9
+
+    covid_data = world_data()
+
+    data = extract_country(data=covid_data, n_days=n_days, col_name=col_name, smooth=n_smooth,
+                col_country=col_country, col_date=col_date, col_confirmed=col_confirmed)
+    data[col_confirmed] = data[col_confirmed].rolling(window=n_smooth).mean()
+
+    data = data.dropna()
+    
+    t_min = 200
+    t_max = 300 - n_smooth
+    t_extract = 400
+    ts = np.arange(0, t_max-t_min)
+    tf = np.arange(0, t_extract-t_min)
+
+    a0=2.0
+    b0=81.0
+    c0=0.043
+
+    confirm = data[col_confirmed].values[t_min:t_max]
+    confirm /= np.max(confirm)
+
+    ##popt, pcov = curve_fit(f.gompertz_fit, p0=[a0, b0, c0], xdata=ts, ydata=confirm)    
+    #print(popt)
+    #print(pcov)
+
+    intA = [1.0, 100.0]
+    intB = [1.0, 500.0]
+    intC = [0.00001, 0.1]
+    intervals = [intA, intB, intC]
+
+    params = [a0, b0, c0]
+    params = montecarlo_fit(function=f.gompertz_fit, params=params, intervals=intervals, x=ts, y=confirm, n=50000)
+    
+    a0 = params[0]
+    b0 = params[1]
+    c0 = params[2]
+
+    gp = f.gompertz(t=ts, a=a0, b=b0, c=c0, derive=True, verbose=True)
+    gfut = f.gompertz(t=tf, a=a0, b=b0, c=c0, derive=True)
+
+    tmax = tf[np.argmax(gfut)]
+    print(f't_max = {tmax - t_max + t_min}')
+
+    plt.plot(ts, gp)
+    plt.plot(ts, confirm)
+    plt.plot(tf, gfut) 
+    plt.show() #block=False)
+    #plt.pause(7)
+    #plt.close()
+
+
+if __name__ == "__main__":
+
+    """ MAIN PROGRAM """
+
+    #countries = country_data()
+
+    do_gompertz()
 
