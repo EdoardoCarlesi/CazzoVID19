@@ -2,3 +2,6 @@
 *.tmp
 *.swp
 *.bak
+data/World
+data/Italy
+data/CountryInfo
