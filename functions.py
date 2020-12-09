@@ -18,6 +18,88 @@ from scipy import stats
 from copy import copy
 
 
+def people_per_region():
+
+    ppr = dict()
+
+    ppr['Lombardia'] = 10.104e+6
+
+
+    return ppr
+
+
+def differential(cumulative=None):
+    """
+        Given a cumulative distribution get the differential one
+    """
+
+    n_diff = len(cumulative)
+    differential = np.zeros(n_diff)
+    differential[n_diff-1] = cumulative[n_diff-1]
+
+    for i in range(0, n_diff-1):
+        differential[i] = cumulative[i] - cumulative[i+1]
+
+    return differential
+
+
+def variation(xdata=None):
+    """
+        Given a cumulative distribution get the differential one
+    """
+
+    n_var = len(xdata)
+    variation = np.zeros(n_var)
+
+    variation[n_var-1] = 0.0 #xdata[n_var-1]
+    variation[n_var-2] = 0.0 #xdata[n_var-1]
+
+    for i in range(0, n_var-1):
+
+        if xdata[i+1] != 0:
+            variation[i] = (xdata[i]-xdata[i+1]) / xdata[i+1]
+        else:
+            variation[i] = 0.0
+
+    return variation
+
+
+def bin_mean(y=None, dx=7):
+    """
+        Average value over a dx interval for a set of y values
+    """
+
+    bin_df = pd.DataFrame()
+    nbins = int(len(y) / dx)
+
+    t_bin = np.zeros(nbins+1)
+    y_bin = np.zeros(nbins+1)
+    y_max = np.zeros(nbins+1)
+    y_min = np.zeros(nbins+1)
+
+    x = 0
+
+    for i in range(0, nbins):
+        y_bin[i] = np.mean(y[i*dx:(i+1)*dx])  
+        y_max[i] = np.max(y[i*dx:(i+1)*dx])  
+        y_min[i] = np.min(y[i*dx:(i+1)*dx])  
+        t_bin[i] = i
+
+    t_bin[nbins] = nbins
+    y_bin[nbins] = np.mean(y[(nbins-1)*dx:])  
+    y_max[nbins] = np.max(y[(nbins-1)*dx:])  
+    y_min[nbins] = np.min(y[(nbins-1)*dx:])  
+
+    bin_df['t'] = t_bin
+    bin_df['mean'] = y_bin
+    bin_df['max'] = y_max
+    bin_df['min'] = y_min
+
+    print(bin_df.head())
+
+    return bin_df
+
+
 def gompertz(t=None, a=None, b=None, c=None, derive=True, verbose=False):
     """
         Gompertz function
@@ -40,14 +122,6 @@ def gompertz(t=None, a=None, b=None, c=None, derive=True, verbose=False):
 
     else:
         return f_t
-
-
-def gompertz_fit(t, a, b, c):
-    """
-        Gompertz curve declared in a scipy compliant form
-    """
-
-    return gompertz(t=t, a=a, b=b, c=c, derive=True)
 
 
 def prepare_data(normalize=True, data=None, split_fac=0.7, LSTM=False, date_col='date', n_days=1):

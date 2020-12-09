@@ -1,4 +1,0 @@
-
-https://www.bsg.ox.ac.uk/research/research-projects/coronavirus-government-response-tracker
-https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv
-

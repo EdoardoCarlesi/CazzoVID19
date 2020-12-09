@@ -11,3 +11,5 @@ https://github.com/pcm-dpc/COVID-19.git
 Dati Internazionali:
 https://github.com/CSSEGISandData/COVID-19
 
+Dati popolazione mondiale:
+https://population.un.org/wpp/Download/Standard/CSV/
