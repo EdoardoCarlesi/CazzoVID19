@@ -18,14 +18,60 @@ from scipy import stats
 from copy import copy
 
 
-def people_per_region():
+def montecarlo_fit(function=None, params=None, intervals=None, x=None, y=None, n=10000):
+    """ Fit a generic function with a broad MC search of the parameter space """
 
-    ppr = dict()
+    print(f'Fitting {function.__name__} with MC method...')
+    n_p = len(intervals)
+    params_mc = np.zeros((n, n_p))
+    err_mc = np.zeros(n)
 
-    ppr['Lombardia'] = 10.104e+6
+    intervals[2][0] = np.log(intervals[2][0])
+    intervals[2][1] = np.log(intervals[2][1])
+
+    for i in range(0, n_p):
+        params_mc[:, i] = np.random.uniform(low=intervals[i][0], high=intervals[i][1], size=n)
+
+    params_mc[:, i] = np.exp(params_mc[:, i])
+
+    for j in range(0, n):
+        this_y = function(x, *params_mc[j,:]) #, params_mc[j,1], params_mc[j,2])
+        err_mc[j] = np.std(abs(this_y - y))
+
+    params = params_mc[np.argmin(err_mc)]
+
+    print(f'ErrMin: {min(err_mc)}, ErrMax: {max(err_mc)} with params={params}')
+    return params
 
 
-    return ppr
+def fit_gompertz(x=None, y=None, n=3000, montecarlo=False):
+    """ Fit a Gompertz function  with three parameters """
+
+    def gompertz_scipy(t, a, b, c):
+        """ Gompertz curve declared in a scipy compliant form """
+    
+        return f.gompertz(t=t, a=a, b=b, c=c, derive=True)
+
+    intA = [1.0, 100.0]
+    intB = [1.0, 500.0]
+    intC = [0.00001, 0.1]
+    params = [1.0, 1.0, 1.0]
+
+    if montecarlo:
+        intervals = [intA, intB, intC]
+        params = montecarlo_fit(function=gompertz_scipy, intervals=intervals, x=x, y=y, n=n)
+
+    try:
+        popt, pcov = curve_fit(gompertz_scipy, xdata=x, ydata=y, p0=params)    
+        print(f'Best fit={popt}')
+    except:
+        print('Best fit parameters not found, using MC instead...')
+        popt = params
+
+    g_mc = f.gompertz(t=x, a=params[0], b=params[1], c=params[2], derive=True)
+    g_fit = f.gompertz(t=x, a=popt[0], b=popt[1], c=popt[2], derive=True)
+
+    return g_mc, g_fit
 
 
 def differential(cumulative=None):
@@ -240,6 +286,11 @@ if __name__ == "__main__":
     """
         The main is used to test functions
     """
+
+    for reg in ['Lombardia', 'Lazio']:
+        print(people_per_region(region=reg))
+
+#def people_per_region(region=None):
 
 
     """

@@ -13,3 +13,7 @@ https://github.com/CSSEGISandData/COVID-19
 
 Dati popolazione mondiale:
 https://population.un.org/wpp/Download/Standard/CSV/
+
+
+Dati popolazione italiana:
+http://dati.istat.it/Index.aspx?DataSetCode=DCIS_POPRES1
