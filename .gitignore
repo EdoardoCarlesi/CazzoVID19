@@ -3,3 +3,9 @@
 activate
 *.swp
 *.bak
+data/World
+data/Italy
+data/CountryInfo
+WPP2019_TotalPopulationBySex.csv
+__pycache__/
+DCIS_POPRES1_10122020000336854.csv

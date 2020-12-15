@@ -1,0 +1,21 @@
+0                   Abruzzo
+1                    Apulia
+2                Basilicata
+3                  Calabria
+4                  Campania
+5            Emilia-Romagna
+6     Friuli-Venezia Giulia
+7                     Lazio
+8                   Liguria
+9                 Lombardia
+10                   Marche
+11                   Molise
+12                 Piemonte
+13                 Sardegna
+14                   Sicily
+15                  Toscana
+16                   Umbria
+17            Valle d'Aosta
+18                   Veneto
+19		P.A. Trento
+20		P.A. Bolzano

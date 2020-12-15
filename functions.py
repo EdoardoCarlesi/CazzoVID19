@@ -18,6 +18,134 @@ from scipy import stats
 from copy import copy
 
 
+def montecarlo_fit(function=None, params=None, intervals=None, x=None, y=None, n=10000):
+    """ Fit a generic function with a broad MC search of the parameter space """
+
+    print(f'Fitting {function.__name__} with MC method...')
+    n_p = len(intervals)
+    params_mc = np.zeros((n, n_p))
+    err_mc = np.zeros(n)
+
+    intervals[2][0] = np.log(intervals[2][0])
+    intervals[2][1] = np.log(intervals[2][1])
+
+    for i in range(0, n_p):
+        params_mc[:, i] = np.random.uniform(low=intervals[i][0], high=intervals[i][1], size=n)
+
+    params_mc[:, i] = np.exp(params_mc[:, i])
+
+    for j in range(0, n):
+        this_y = function(x, *params_mc[j,:]) #, params_mc[j,1], params_mc[j,2])
+        err_mc[j] = np.std(abs(this_y - y))
+
+    params = params_mc[np.argmin(err_mc)]
+
+    print(f'ErrMin: {min(err_mc)}, ErrMax: {max(err_mc)} with params={params}')
+    return params
+
+
+def fit_gompertz(x=None, y=None, n=3000, montecarlo=False):
+    """ Fit a Gompertz function  with three parameters """
+
+    def gompertz_scipy(t, a, b, c):
+        """ Gompertz curve declared in a scipy compliant form """
+    
+        return f.gompertz(t=t, a=a, b=b, c=c, derive=True)
+
+    intA = [1.0, 100.0]
+    intB = [1.0, 500.0]
+    intC = [0.00001, 0.1]
+    params = [1.0, 1.0, 1.0]
+
+    if montecarlo:
+        intervals = [intA, intB, intC]
+        params = montecarlo_fit(function=gompertz_scipy, intervals=intervals, x=x, y=y, n=n)
+
+    try:
+        popt, pcov = curve_fit(gompertz_scipy, xdata=x, ydata=y, p0=params)    
+        print(f'Best fit={popt}')
+    except:
+        print('Best fit parameters not found, using MC instead...')
+        popt = params
+
+    g_mc = f.gompertz(t=x, a=params[0], b=params[1], c=params[2], derive=True)
+    g_fit = f.gompertz(t=x, a=popt[0], b=popt[1], c=popt[2], derive=True)
+
+    return g_mc, g_fit
+
+
+def differential(cumulative=None):
+    """
+        Given a cumulative distribution get the differential one
+    """
+
+    n_diff = len(cumulative)
+    differential = np.zeros(n_diff)
+    differential[n_diff-1] = cumulative[n_diff-1]
+
+    for i in range(0, n_diff-1):
+        differential[i] = cumulative[i] - cumulative[i+1]
+
+    return differential
+
+
+def variation(xdata=None):
+    """
+        Given a cumulative distribution get the differential one
+    """
+
+    n_var = len(xdata)
+    variation = np.zeros(n_var)
+
+    variation[n_var-1] = 0.0 #xdata[n_var-1]
+    variation[n_var-2] = 0.0 #xdata[n_var-1]
+
+    for i in range(0, n_var-1):
+
+        if xdata[i+1] != 0:
+            variation[i] = (xdata[i]-xdata[i+1]) / xdata[i+1]
+        else:
+            variation[i] = 0.0
+
+    return variation
+
+
+def bin_mean(y=None, dx=7):
+    """
+        Average value over a dx interval for a set of y values
+    """
+
+    bin_df = pd.DataFrame()
+    nbins = int(len(y) / dx)
+
+    t_bin = np.zeros(nbins+1)
+    y_bin = np.zeros(nbins+1)
+    y_max = np.zeros(nbins+1)
+    y_min = np.zeros(nbins+1)
+
+    x = 0
+
+    for i in range(0, nbins):
+        y_bin[i] = np.mean(y[i*dx:(i+1)*dx])  
+        y_max[i] = np.max(y[i*dx:(i+1)*dx])  
+        y_min[i] = np.min(y[i*dx:(i+1)*dx])  
+        t_bin[i] = i
+
+    t_bin[nbins] = nbins
+    y_bin[nbins] = np.mean(y[(nbins-1)*dx:])  
+    y_max[nbins] = np.max(y[(nbins-1)*dx:])  
+    y_min[nbins] = np.min(y[(nbins-1)*dx:])  
+
+    bin_df['t'] = t_bin
+    bin_df['mean'] = y_bin
+    bin_df['max'] = y_max
+    bin_df['min'] = y_min
+
+    print(bin_df.head())
+
+    return bin_df
+
+
 def gompertz(t=None, a=None, b=None, c=None, derive=True, verbose=False):
     """
         Gompertz function
@@ -40,14 +168,6 @@ def gompertz(t=None, a=None, b=None, c=None, derive=True, verbose=False):
 
     else:
         return f_t
-
-
-def gompertz_fit(t, a, b, c):
-    """
-        Gompertz curve declared in a scipy compliant form
-    """
-
-    return gompertz(t=t, a=a, b=b, c=c, derive=True)
 
 
 def prepare_data(normalize=True, data=None, split_fac=0.7, LSTM=False, date_col='date', n_days=1):
@@ -166,6 +286,11 @@ if __name__ == "__main__":
     """
         The main is used to test functions
     """
+
+    for reg in ['Lombardia', 'Lazio']:
+        print(people_per_region(region=reg))
+
+#def people_per_region(region=None):
 
 
     """
