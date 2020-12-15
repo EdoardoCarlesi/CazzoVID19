@@ -34,56 +34,45 @@ def forward_prediction(days_fwd=1, model=None, start=None):
     return fwd
 
 
-def compare_curves(do_countries=False, do_regions=True, countries=[], normalize=True):
+def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7):
     """ Fit data from various countries/regions to Gompertz curve """
 
     # How many days forward for the target and on how many days should we smooth (rolling average)
     n_days = 1
-    n_smooth = 13
 
     # What kind of analysis?
     montecarlo = False
     do_gompertz = False
     shift_peak = False
     do_bin = False
-
-    if do_countries:
-        #countries = ['Sweden', 'Italy']
-        #countries = ['Italy', 'Belgium', 'Serbia']; populations = [62e+6, 11.5e+6, 7.5e+6]
-        countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
-        #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany'] 
-        #countries = ['Sweden', 'Italy', 'Belgium', 'Serbia']
- 
-    elif do_regions:
-        countries = ['Sardegna', 'Friuli Venezia Giulia', 'Lazio', 'Abruzzo'] 
-        populations = [rd.people_per_region(region=reg) for reg in countries]
     
-        print(populations)
-        #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
-        #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Sicilia', 'Veneto', 'Campania']
+    # Well this implementatation is not elegant at all...
+    populations = rd.people_per_region(regions=countries)
 
-    #columns = ['confirmed_smooth', 'deaths_smooth']
-    #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
-    #columns = ['confirmed_smooth', 'confirmed']
-    #columns = ['confirmed_smooth', 'deaths_smooth']
-    columns = ['deaths']
-    #columns = ['deaths_variation', 'deaths_smooth']
-    #columns = ['confirmed_variation', 'confirmed_smooth']
-    #columns = ['confirmed_smooth']
-    #columns = ['confirmed_acceleration']
-    #columns = ['deaths_acceleration']
-    #columns = ['confirmed_velocity']
-    #columns = ['deaths_smooth']
-    #columns = ['confirmed_variation_smooth']
-    #columns = ['confirmed_variation_smooth']
-    #columns = ['confirmed_variation_smooth', 'deaths_variation_smooth']
+    # If we find and empty list then it means we are not dealing with regions
+    if populations != []:
+        print('Analyzing regions...')
+        do_countries = False
+
+    # Try analyzing countries instead
+    else:
+        
+        populations = rd.people_per_country(countries=countries) 
+
+        # Again, if we find a non empty list it means we can proceed
+        if populations != []:
+            print('Analyzing countries...')
+            do_countries = True
+        else:
+            print(f'The countries/regions mentioned are not available. Exit program...')
+            exit()
 
     for i, country in enumerate(countries):
 
         if do_countries:
             data = rd.extract_country(n_days=n_days, smooth=n_smooth, country=country)     
-            data = data.dropna()
-        elif do_regions:
+            #data = data.dropna()
+        else:
             data = rd.extract_region(region=country, smooth=n_smooth)
             #data = data.dropna()
 
@@ -99,7 +88,7 @@ def compare_curves(do_countries=False, do_regions=True, countries=[], normalize=
 
         plt.title(title)
 
-        print(data.head())
+        #print(data.head())
 
         for select in columns:
             #values = data[select].values[0:t_max-t_min][::-1]
@@ -157,13 +146,38 @@ def compare_curves(do_countries=False, do_regions=True, countries=[], normalize=
 
 
 if __name__ == "__main__":
+    """ The main is a wrapper to select the kind of analysis and compare curves of regions or countries """
 
-    """ MAIN PROGRAM """
+    #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
+    #countries = ['Sweden', 'Italy']
+    countries = ['Italy', 'Belgium', 'Sweden']
+    #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
+    #countries = ['Sardegna', 'Friuli Venezia Giulia', 'Lazio', 'Abruzzo'] 
+    #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany'] 
+    #countries = ['Sweden', 'Italy', 'Belgium', 'Serbia']
+    #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Sicilia', 'Veneto', 'Campania']
 
-    #countries = country_data()
+    #columns = ['confirmed_smooth', 'deaths_smooth']
+    #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
+    #columns = ['confirmed_smooth', 'confirmed']
+    #columns = ['confirmed_smooth', 'deaths_smooth']
+    columns = ['deaths']
+    #columns = ['deaths_variation', 'deaths_smooth']
+    #columns = ['confirmed_variation', 'confirmed_smooth']
+    #columns = ['confirmed_smooth']
+    #columns = ['confirmed_acceleration']
+    #columns = ['deaths_acceleration']
+    #columns = ['confirmed_velocity']
+    #columns = ['deaths_smooth']
+    #columns = ['confirmed_variation_smooth', 'deaths_variation_smooth']
+    
+    # Initialize data, scraping stuff from the web if needed
+    rd.init_data()
 
-    #compare_curves(do_countries=True, do_regions=False)
-    compare_curves()
+    # Set some parameters
+    n_smooth = 12
+
+    compare_curves(countries=countries, columns=columns, n_smooth=n_smooth)
 
 
 

@@ -1,57 +1,141 @@
 import pandas as pd
 import numpy as np
 import functions as f
+import os 
+ 
+# General url settings for Italian regions
+global regions_path; regions_path = 'data/Italy/popolazione_per_region.csv'
+global regions_url; regions_url = 'https://www.tuttitalia.it/regioni/popolazione/'
+
+# Set reference urls for global csv file
+global countries_path; countries_path = 'data/World/people_per_country.csv'
+global countries_url; countries_url = 'https://www.worldometers.info/world-population/population-by-country/'
 
 
-def people_per_country(country=None):
-    """ to be implemented """
-    pass
 
 
-def people_per_region(region=None):
+def init_data():
+    """ Check if tables are there else scrap them from the web """
+
+    # Check if this file exists
+    if os.path.isfile(countries_path):
+        print(f'Reading population data from {countries_path}')
+        data = pd.read_csv(countries_path)    
+    
+    # Otherwise get the region data from an url
+    else:
+        # Import some relevant libraries just for this task
+        from urllib.request import Request, urlopen
+
+        print(f'Reading population data from {countries_url}')
+
+        # We need to do this otherwise the request will be blocked
+        req = Request(countries_url, headers={'User-Agent': 'Mozilla/5.0'})
+        webpage = urlopen(req).read()
+        
+        countries_table = pd.read_html(webpage)
+    
+        # Convert the scraped URL into a pandas dataframe
+        data = countries_table[0]
+
+        # Export file to CSV
+        data.to_csv(local_path)
+
+    # Check if this file exists
+    if os.path.isfile(regions_path):
+        print(f'Reading population data from {regions_path}...')
+        data_fix = pd.read_csv(regions_path)    
+    
+    # Otherwise get the region data from an url
+    else:
+        print(f'Reading population data from {regions_url}')
+        region_table = pd.read_html(regions_url)
+    
+        # Convert the scraped URL into a pandas dataframe
+        data = region_table[0]
+        data_fix = pd.DataFrame()
+
+        # Rename the columns with some readable name
+        data.columns = ['Unnamed', 'Regione', 'Popolazione', 'Superficie', 'Densita', 'NumeroComuni', 'NumeroProvince']
+        nomi = []
+        pop = []
+        dens = []
+        n = len(data)
+
+        # Fix the data format, it comes in some kind of list format so it needs to be adapted
+        for i in range(0, n-1):
+            nomi.append(data['Regione'].values[i])
+            pop.append(int(data['Popolazione'].values[i].replace('.', '')))
+            dens.append(data['Densita'].values[i])
+    
+        # Now that the data has been fixed properly
+        data_fix['Regione'] = np.array(nomi)
+        data_fix['Densita'] = np.array(dens)
+        data_fix['Popolazione'] = np.array(pop)
+
+        # Export file to CSV
+        data_fix.to_csv(regions_path)
+
+    
+
+def people_per_country(countries=None):
+    """ Read world population data from a table which can be scraped from the web """
+    
+    # Column names
+    col_country = 'Country (or dependency)'  
+    col_population = 'Population (2020)'
+
+    # First let's check we're receiving a list, otherwise convert to list
+    if isinstance(countries,list):
+        pass
+    else:
+        countries = [countries]
+
+    # Read from the local path of country files
+    data = pd.read_csv(countries_path)
+
+    # Now search for and append to this list
+    populations = []
+
+    data 
+
+    for country in countries:
+        try:
+            population = data[data[col_country] == country][col_population].values
+            populations.append(population)
+        except ValueError:
+            print(f'Country: {country} could not be found in database')
+
+    return populations
+
+
+def people_per_region(regions=None):
     """ Scrape an html table from a website and get the population """
+ 
+    # First let's check we're dealing with a list, otherwise convert
+    if isinstance(regions, list):
+        pass
+    else:
+        regions = [regions]
 
-    '''
-    This file could also be used but it's quicker the other way
-    file_regioni = 'data/Italy/DCIS_POPRES1_10122020000336854.csv'
-    data = pd.read_csv(file_regioni)
-    sel = data[data['Territorio'] == region]
-    '''
-    
-    # Get the region data from this url
-    region_url = 'https://www.tuttitalia.it/regioni/popolazione/'
-    region_table = pd.read_html(region_url)
-    
-    # 
-    data = region_table[0]
-    data_fix = pd.DataFrame()
+    # Read from the local path
+    data = pd.read_csv(regions_path)
 
-    # Rename the columns with some readable name
-    data.columns = ['Unnamed', 'Regione', 'Popolazione', 'Superficie', 'Densita', 'NumeroComuni', 'NumeroProvince']
-    nomi = []
-    pop = []
-    dens = []
-    n = len(data)
+    # Now search for and append all the values to this list
+    populations = []
 
-    # The data comes in some strangr
-    for i in range(0, n-1):
-        nomi.append(data['Regione'].values[i])
-        pop.append(int(data['Popolazione'].values[i].replace('.', '')))
-        dens.append(data['Densita'].values[i])
-    
-    data_fix['Regione'] = np.array(nomi)
-    data_fix['Densita'] = np.array(dens)
-    data_fix['Popolazione'] = np.array(pop)
+    for region in regions:
+        if region in data['Regione'].values:
+            population = data[data['Regione'] == region]['Popolazione'].values[0]
+            populations.append(population)
 
-    data_fix.to_csv('data/Italy/popolazione_per_regione.csv')
-
-    return data_fix[data_fix['Regione'] == region]['Popolazione'].values[0]
+    return populations
 
 
 def country_data(countries=None, populations=None, verbose=False):
     """ This reads and formats the full Oxford dataset """
 
-    csv_file = '/home/edoardo/devel/CoronaVirus/data/CountryInfo/OxCGRT_latest.csv'
+    csv_file = 'data/CountryInfo/OxCGRT_latest.csv'
 
     data = pd.read_csv(csv_file)
 
@@ -106,43 +190,64 @@ def country_data(countries=None, populations=None, verbose=False):
     plt.show()
 
 
-def extract_region(region=None, smooth=1):
+def smooth_data(data=None, smooth=3, invert=False):
+
+    if smooth > 1:
+        columns = ['confirmed', 'deaths']
+    else:
+        print('smooth_data() will not work, smoothing days={smooth}')
+
+        return data
+
+    # Loop over the columns we want to smooth over
+    for col in columns:
+
+        # Smoothed data goes to a new column
+        col_smooth = col + '_smooth'
+        col_variation = col + '_variation'
+        col_variation_smooth = col+ '_variation_smooth'
+        col_velocity =  col + '_velocity' 
+        col_acceleration = col + '_acceleration'
+
+        if invert:
+            data[col_smooth] = data[columns[i]].rolling(window=smooth).mean()
+            data[col_variation] = data[columns[i]][::-1].pct_change()
+            data[col_variation_smooth] = data[col_smooth][::-1].pct_change()
+            data[col_velocity] = np.gradient(data[col_smooth])
+            data[col_acceleration] = np.gradient(data[col_velocity])
+    
+            '''
+        data['confirmed_smooth'] = data['confirmed'][::-1].rolling(window=smooth).mean()
+        data['confirmed_variation_smooth'] = data['confirmed_smooth'][::-1].pct_change()
+        data['confirmed_variation'] = data['confirmed'][::-1].pct_change()
+        data['confirmed_velocity'] = np.gradient(data['confirmed_smooth'])[::-1] 
+        data['confirmed_acceleration'] = np.gradient(data['confirmed_velocity'])
+            '''
+
+    return data
+
+def extract_region(region=None, smooth=1, n_days=1):
     """ This function is specific only for italian regions """
 
     file_regioni = 'data/Italy/dati-regioni/dpc-covid19-ita-regioni.csv'
     data_regioni = pd.read_csv(file_regioni)
+    col_region = 'denominazione_regione'
 
-    #print(data_regioni.columns)
-
-    if region not in data_regioni['denominazione_regione'].unique():
+    if region not in data_regioni[col_region].unique():
         print('Region: ', region, ' is not a valid region. Try again.')
         exit()
 
-    print('Region selected: ', region)
-    #print(data_regioni.head())
-    #print(data_regioni[data_regioni['denominazione_regione'] == 'Abruzzo']['nuovi_positivi'])
-    nomi_regioni = data_regioni['denominazione_regione'].unique()
+    print(f'Region selected: {region}')
+    nomi_regioni = data_regioni[col_region].unique()
     data_clean = pd.DataFrame()
-    data_regione = data_regioni[data_regioni['denominazione_regione'] == region]
-    print(f'Total number of points for {region} is {len(data_regione)}')
-    #print(data_regione.head())
+    data_region = data_regioni[data_regioni[col_region] == region]
 
-    data_clean['date'] = data_regione['data'][::-1]
-    data_clean['confirmed'] = data_regione['nuovi_positivi'][::-1]
-    data_clean['deaths'] = f.differential(cumulative=data_regione['deceduti'][::-1].values)
-    #print(data_clean['deaths'])
+    print(f'Total number of points for {region} is {len(data_region)}')
+    data_clean['date'] = data_region['data'][::-1]
+    data_clean['confirmed'] = data_region['nuovi_positivi'][::-1]
+    data_clean['deaths'] = f.differential(cumulative=data_region['deceduti'][::-1].values)
 
-
-    if smooth > 1:
-        data_clean['confirmed_smooth'] = data_clean['confirmed'][::-1].rolling(window=smooth).mean()
-        data_clean['confirmed_variation_smooth'] = data_clean['confirmed_smooth'][::-1].pct_change()
-        data_clean['confirmed_variation'] = data_clean['confirmed'][::-1].pct_change()
-        data_clean['confirmed_velocity'] = np.gradient(data_clean['confirmed_smooth'])[::-1] 
-        data_clean['confirmed_acceleration'] = np.gradient(data_clean['confirmed_velocity'])
-        data_clean['deaths_smooth'] = data_clean['deaths'][::-1].rolling(window=smooth).mean()
-        data_clean['deaths_variation'] = data_clean['deaths'].pct_change()
-        data_clean['deaths_velocity'] = np.gradient(data_clean['deaths_smooth'])[::-1]
-        data_clean['deaths_acceleration'] = np.gradient(data_clean['deaths_velocity'])
+    data_clean = smooth_data(data=data_clean, smooth=smooth)
 
     #data_clean = data_clean.dropna()
     #print(f'Total number of points for {region} (clean) is {len(data_clean)}')
@@ -154,7 +259,7 @@ def extract_region(region=None, smooth=1):
 def extract_country(n_days=1, country=None, smooth=7):
     """ Take a single country from the fulldataset and extract the relevant time series """
 
-    covid_path = '/home/edoardo/devel/CoronaVirus/data/World/csse_covid_19_data/csse_covid_19_time_series/'
+    covid_path = 'data/World/csse_covid_19_data/csse_covid_19_time_series/'
     deaths_file = 'time_series_covid19_deaths_global.csv'
     confirmed_file = 'time_series_covid19_confirmed_global.csv'
     recovered_file = 'time_series_covid19_recovered_global.csv'
@@ -178,20 +283,7 @@ def extract_country(n_days=1, country=None, smooth=7):
         data_full['date'] = dates
         data_full[columns[i]] = f.differential(cumulative=row[::-1])
 
-        # Smooth the data to another column
-        col_smooth = columns[i] + '_smooth'
-        col_variation = columns[i] + '_variation'
-        col_variation_smooth = columns[i] + '_variation_smooth'
-        col_velocity =  columns[i] + '_velocity' 
-        col_acceleration = columns[i] + '_acceleration'
-
-        # Ensure smoothing makes sense, compute also the gradient (variatio)
-        if smooth > 1:
-            data_full[col_smooth] = data_full[columns[i]].rolling(window=smooth).mean()
-            data_full[col_variation] = data_full[columns[i]][::-1].pct_change()
-            data_full[col_variation_smooth] = data_full[col_smooth][::-1].pct_change()
-            data_full[col_velocity] = np.gradient(data_full[col_smooth])
-            data_full[col_acceleration] = np.gradient(data_full[col_acceleration])
+    data_full = smooth_data(data=data_full, smooth=smooth)
 
     # TODO FIXME
     # Once the data has been initialized generate a target column for LSTM or other predictive models
@@ -201,5 +293,12 @@ def extract_country(n_days=1, country=None, smooth=7):
     
     return data_full
 
+
+if __name__ == "__main__":
+
+    data_init()
+
+    #print(people_per_region(regioni='Lazio'))
+    #print(people_per_country(countries='Italy'))
 
 
