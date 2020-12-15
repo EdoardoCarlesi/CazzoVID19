@@ -191,6 +191,15 @@ def country_data(countries=None, populations=None, verbose=False):
 
 
 def smooth_data(data=None, smooth=3, invert=False):
+    """ Smooth the columns over a rolling average of n=smooth days and remove outliers """
+
+    def remove_outliers(x):
+        """ This function can be made more sophisticated """
+
+        if x < 0.0: 
+            x = 0.0
+
+        return x
 
     if smooth > 1:
         columns = ['confirmed', 'deaths']
@@ -201,6 +210,8 @@ def smooth_data(data=None, smooth=3, invert=False):
 
     # Loop over the columns we want to smooth over
     for col in columns:
+
+        data[col] = data[col].apply(remove_outliers)
 
         # Smoothed data goes to a new column
         col_smooth = col + '_smooth'
@@ -225,6 +236,7 @@ def smooth_data(data=None, smooth=3, invert=False):
             '''
 
     return data
+
 
 def extract_region(region=None, smooth=1, n_days=1):
     """ This function is specific only for italian regions """

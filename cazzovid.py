@@ -76,7 +76,7 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7):
             data = rd.extract_region(region=country, smooth=n_smooth)
             #data = data.dropna()
 
-        t_min = 220
+        t_min = 20
         t_max = 320 - n_smooth
         ts = np.arange(0, t_max-t_min)
         pop0 = populations[i]
@@ -148,9 +148,9 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7):
 if __name__ == "__main__":
     """ The main is a wrapper to select the kind of analysis and compare curves of regions or countries """
 
-    #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
+    countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
     #countries = ['Sweden', 'Italy']
-    countries = ['Italy', 'Belgium', 'Sweden']
+    #countries = ['Italy', 'Belgium', 'Sweden']
     #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
     #countries = ['Sardegna', 'Friuli Venezia Giulia', 'Lazio', 'Abruzzo'] 
     #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany'] 
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     rd.init_data()
 
     # Set some parameters
-    n_smooth = 12
+    n_smooth = 15
 
     compare_curves(countries=countries, columns=columns, n_smooth=n_smooth)
 
