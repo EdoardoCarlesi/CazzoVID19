@@ -3,6 +3,7 @@ import numpy as np
 import functions as f
 import os 
  
+
 # General url settings for Italian regions
 global regions_path; regions_path = 'data/Italy/popolazione_per_region.csv'
 global regions_url; regions_url = 'https://www.tuttitalia.it/regioni/popolazione/'
@@ -10,8 +11,6 @@ global regions_url; regions_url = 'https://www.tuttitalia.it/regioni/popolazione
 # Set reference urls for global csv file
 global countries_path; countries_path = 'data/World/people_per_country.csv'
 global countries_url; countries_url = 'https://www.worldometers.info/world-population/population-by-country/'
-
-
 
 
 def init_data():
@@ -39,7 +38,7 @@ def init_data():
         data = countries_table[0]
 
         # Export file to CSV
-        data.to_csv(local_path)
+        data.to_csv(countries_path)
 
     # Check if this file exists
     if os.path.isfile(regions_path):
@@ -75,8 +74,9 @@ def init_data():
 
         # Export file to CSV
         data_fix.to_csv(regions_path)
-
     
+    return None
+
 
 def people_per_country(countries=None):
     """ Read world population data from a table which can be scraped from the web """
@@ -96,8 +96,6 @@ def people_per_country(countries=None):
 
     # Now search for and append to this list
     populations = []
-
-    data 
 
     for country in countries:
         try:
@@ -139,8 +137,6 @@ def country_data(countries=None, populations=None, verbose=False):
 
     data = pd.read_csv(csv_file)
 
-    print(data.info())
-
     if verbose:
         print(data.info())
         print(data.head())
@@ -160,11 +156,10 @@ def country_data(countries=None, populations=None, verbose=False):
     col_stringency = cols[37]
     col_response = cols[41]
     col_contain = cols[43]
-
     col_deaths = cols[36]
 
     countries = ['Italy', 'Sweden', 'Denmark', 'Germany', 'Spain', 'France', 'Russia', 'Japan', 'Peru', 'Brazil']; 
-    populations = [62.0, 10.0, 5.0, 80.0, 45.0, 60, 200, 120, 35, 300]
+    populations = people_per_country(countries=countries)
 
     for i, country in enumerate(countries):
         pop = populations[i]
@@ -202,6 +197,7 @@ def smooth_data(data=None, smooth=3, invert=False):
         return x
 
     if smooth > 1:
+        print(f'Smoothing data over {smooth} days')
         columns = ['confirmed', 'deaths']
     else:
         print('smooth_data() will not work, smoothing days={smooth}')
@@ -220,20 +216,19 @@ def smooth_data(data=None, smooth=3, invert=False):
         col_velocity =  col + '_velocity' 
         col_acceleration = col + '_acceleration'
 
+        # TODO 
         if invert:
-            data[col_smooth] = data[columns[i]].rolling(window=smooth).mean()
-            data[col_variation] = data[columns[i]][::-1].pct_change()
+            data[col_smooth] = data[col].rolling(window=smooth).mean()
+            data[col_variation] = data[col][::-1].pct_change()
             data[col_variation_smooth] = data[col_smooth][::-1].pct_change()
             data[col_velocity] = np.gradient(data[col_smooth])
             data[col_acceleration] = np.gradient(data[col_velocity])
-    
-            '''
-        data['confirmed_smooth'] = data['confirmed'][::-1].rolling(window=smooth).mean()
-        data['confirmed_variation_smooth'] = data['confirmed_smooth'][::-1].pct_change()
-        data['confirmed_variation'] = data['confirmed'][::-1].pct_change()
-        data['confirmed_velocity'] = np.gradient(data['confirmed_smooth'])[::-1] 
-        data['confirmed_acceleration'] = np.gradient(data['confirmed_velocity'])
-            '''
+        else:
+            data[col_smooth] = data[col].rolling(window=smooth).mean()
+            data[col_variation] = data[col][::-1].pct_change()
+            data[col_variation_smooth] = data[col_smooth][::-1].pct_change()
+            data[col_velocity] = np.gradient(data[col_smooth])
+            data[col_acceleration] = np.gradient(data[col_velocity])
 
     return data
 
@@ -307,10 +302,11 @@ def extract_country(n_days=1, country=None, smooth=7):
 
 
 if __name__ == "__main__":
+    """ Test the routines """
 
     data_init()
 
     #print(people_per_region(regioni='Lazio'))
     #print(people_per_country(countries='Italy'))
 
-
+    pass

@@ -50,7 +50,7 @@ def fit_gompertz(x=None, y=None, n=3000, montecarlo=False):
     def gompertz_scipy(t, a, b, c):
         """ Gompertz curve declared in a scipy compliant form """
     
-        return f.gompertz(t=t, a=a, b=b, c=c, derive=True)
+        return gompertz(t=t, a=a, b=b, c=c, derive=True)
 
     intA = [1.0, 100.0]
     intB = [1.0, 500.0]
@@ -68,8 +68,8 @@ def fit_gompertz(x=None, y=None, n=3000, montecarlo=False):
         print('Best fit parameters not found, using MC instead...')
         popt = params
 
-    g_mc = f.gompertz(t=x, a=params[0], b=params[1], c=params[2], derive=True)
-    g_fit = f.gompertz(t=x, a=popt[0], b=popt[1], c=popt[2], derive=True)
+    g_mc = gompertz(t=x, a=params[0], b=params[1], c=params[2], derive=True)
+    g_fit = gompertz(t=x, a=popt[0], b=popt[1], c=popt[2], derive=True)
 
     return g_mc, g_fit
 

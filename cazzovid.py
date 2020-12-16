@@ -5,12 +5,11 @@ import read_data as rd
 
 import seaborn as sns
 import matplotlib.pyplot as plt
-
 import scipy
+
 from scipy.optimize import curve_fit
 from scipy import stats
 from copy import copy
-
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import LinearRegression
 
@@ -34,15 +33,15 @@ def forward_prediction(days_fwd=1, model=None, start=None):
     return fwd
 
 
-def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7):
+def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_max=320, t_min=250):
     """ Fit data from various countries/regions to Gompertz curve """
 
     # How many days forward for the target and on how many days should we smooth (rolling average)
     n_days = 1
 
     # What kind of analysis?
-    montecarlo = False
-    do_gompertz = False
+    montecarlo = True
+    do_gompertz = True
     shift_peak = False
     do_bin = False
     
@@ -56,7 +55,6 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7):
 
     # Try analyzing countries instead
     else:
-        
         populations = rd.people_per_country(countries=countries) 
 
         # Again, if we find a non empty list it means we can proceed
@@ -76,10 +74,10 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7):
             data = rd.extract_region(region=country, smooth=n_smooth)
             #data = data.dropna()
 
-        t_min = 20
-        t_max = 320 - n_smooth
+        t_max = t_max #- n_smooth
         ts = np.arange(0, t_max-t_min)
         pop0 = populations[i]
+
         print(f'Place: {country} Population: {pop0/1e+6} M')
 
         title = ' '.join(countries) + ' ' + str(n_smooth) + ' day average'
@@ -88,26 +86,26 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7):
 
         plt.title(title)
 
-        #print(data.head())
-
         for select in columns:
-            #values = data[select].values[0:t_max-t_min][::-1]
-            values = data[select].values[0:t_max-t_min]
-            values0 = np.max(values[np.logical_not(np.isnan(values))])
+            #values = data[data[select] == country].values
 
             if do_bin:
                 bin_df = f.bin_mean(values)
                 values = bin_df['mean']
                 ts = bin_df['t']
 
-            print(f'N Values: {len(values)}, max:{values0}')
-
             if normalize:
-                values /= values0
+                #values = data[select].values[0:t_max-t_min][::-1]
+                values = data[select].values[0:t_max-t_min]
+                print(values)
+                values0 = np.max(values[np.logical_not(np.isnan(values))])
+                print(values0)
+                print(f'N Values: {len(values)}, max:{values0}')
+
+                values = values/values0
                 t_value = np.where(values == 1.0)
-                values *= values0
-                values /= pop0
-                #values *= 1.0e+6
+                values = values*values0
+                values = values/pop0
 
                 median = np.median(values[np.isfinite(values)])
                 stddev = np.std(values[~np.isnan(values)])
@@ -148,38 +146,40 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7):
 if __name__ == "__main__":
     """ The main is a wrapper to select the kind of analysis and compare curves of regions or countries """
 
-    countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
+    #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
     #countries = ['Sweden', 'Italy']
     #countries = ['Italy', 'Belgium', 'Sweden']
     #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
     #countries = ['Sardegna', 'Friuli Venezia Giulia', 'Lazio', 'Abruzzo'] 
     #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany'] 
-    #countries = ['Sweden', 'Italy', 'Belgium', 'Serbia']
+    countries = ['Sweden', 'Italy', 'Germany']
     #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Sicilia', 'Veneto', 'Campania']
 
-    #columns = ['confirmed_smooth', 'deaths_smooth']
     #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
     #columns = ['confirmed_smooth', 'confirmed']
     #columns = ['confirmed_smooth', 'deaths_smooth']
-    columns = ['deaths']
+    #columns = ['deaths']
+    #columns = ['confirmed_smooth']
+    columns = ['deaths_smooth']
     #columns = ['deaths_variation', 'deaths_smooth']
     #columns = ['confirmed_variation', 'confirmed_smooth']
-    #columns = ['confirmed_smooth']
     #columns = ['confirmed_acceleration']
     #columns = ['deaths_acceleration']
     #columns = ['confirmed_velocity']
-    #columns = ['deaths_smooth']
-    #columns = ['confirmed_variation_smooth', 'deaths_variation_smooth']
     
     # Initialize data, scraping stuff from the web if needed
     rd.init_data()
 
     # Set some parameters
-    n_smooth = 15
+    n_smooth = 7
+    t_min = 220
+    t_max =  300
 
-    compare_curves(countries=countries, columns=columns, n_smooth=n_smooth)
+    # Run the program
+    compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min)
 
-
+    # Done
+    exit()
 
 
 
