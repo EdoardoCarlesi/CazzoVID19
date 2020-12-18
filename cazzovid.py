@@ -40,8 +40,8 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
     n_days = 1
 
     # What kind of analysis?
-    montecarlo = True
-    do_gompertz = True
+    montecarlo = False
+    do_gompertz = False
     shift_peak = False
     do_bin = False
     
@@ -64,7 +64,8 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
         else:
             print(f'The countries/regions mentioned are not available. Exit program...')
             exit()
-
+    
+    # TODO avoid this loop on countries and replace with 
     for i, country in enumerate(countries):
 
         if do_countries:
@@ -87,7 +88,7 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
         plt.title(title)
 
         for select in columns:
-            #values = data[data[select] == country].values
+            values = data[data[select] == country].values
 
             if do_bin:
                 bin_df = f.bin_mean(values)
@@ -137,10 +138,15 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
                     plt.plot(ts, g_mc, label=mc_label) 
 
     plt.legend()
-    plt.show() 
-    #block=False)
-    #plt.pause(7)
-    #plt.close()
+    plt.show()
+
+    '''
+        plt.show(block=False)
+        plt.pause(7)
+        plt.cla()
+        plt.clf()
+        plt.close()
+    '''
 
 
 if __name__ == "__main__":
@@ -152,7 +158,8 @@ if __name__ == "__main__":
     #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
     #countries = ['Sardegna', 'Friuli Venezia Giulia', 'Lazio', 'Abruzzo'] 
     #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany'] 
-    countries = ['Sweden', 'Italy', 'Germany']
+    #countries = ['Sweden', 'Italy', 'Germany']
+    countries = ['Switzerland', 'Hungary', 'Austria']
     #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Sicilia', 'Veneto', 'Campania']
 
     #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
@@ -172,7 +179,7 @@ if __name__ == "__main__":
 
     # Set some parameters
     n_smooth = 7
-    t_min = 220
+    t_min = 20
     t_max =  300
 
     # Run the program

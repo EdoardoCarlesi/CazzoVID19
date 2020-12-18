@@ -1,9 +1,7 @@
 #!/bin/bash
 
-"
- CazzoVID-19
- Update the files' database
-"
+# CazzoVID-19
+# Update the files' database
 
 dir1='CountryInfo'
 dir2='Italy'
