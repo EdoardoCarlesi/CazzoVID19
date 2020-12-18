@@ -14,7 +14,8 @@ global countries_url; countries_url = 'https://www.worldometers.info/world-popul
 
 # Other useful CSV files
 global countries_csv_file; country_csv_file = 'data/CountryInfo/OxCGRT_latest.csv'
-global mobility_file; mobility_file='https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
+global mobility_csv_full; mobility_csv_full='https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
+global mobility_csv_reduced; mobility_csv_reduced='data/World/Global_Mobility_Report_Reduced.csv'
 
 
 def init_data():
@@ -78,9 +79,46 @@ def init_data():
 
         # Export file to CSV
         data_fix.to_csv(regions_path)
-    
+
+        print('Done.')
+
+    # Check mobility data and compress
+    if os.path.isfile(mobility_csv_reduced):
+        pass
+    else:
+        print('Compressing mobility data...')
+        col_region = 'sub_region_1'
+        mobility = pd.read_csv(mobility_csv_full)
+        data = data[data[col_region].isnan()]
+
+        data.to_csv(mobility_csv_reduced)
+        print(data.head())
+
     return None
 
+
+def mobility(countries=None):
+    """ Returns mobility daya for a list of countries """
+
+    print('Reading mobility data...')
+
+    country_col = 'country_region'
+    recreation_col = 'retail_and_recreation_percent_change_from_baseline'
+
+    data = pd.read_csv(mobility_csv_reduced)
+
+    print(data.head())
+
+    mobs = []
+
+    for country in countries:
+        this_mob = data[data[country_col] == country]
+        mobs.append(np.array(this_mob, dtype=float))
+        print(this_mob)
+
+    print('Done.')
+
+    return mobs
 
 def people_per_country(countries=None):
     """ Read world population data from a table which can be scraped from the web """
@@ -307,9 +345,15 @@ def extract_country(n_days=1, country=None, smooth=7):
 if __name__ == "__main__":
     """ Test the routines """
 
-    data_init()
+    countries = ['Italy', 'France', 'Sweden']
+
+    init_data()
+    mobs = mobility(countries=countries)
+
+    for i in range(0, len(countries)):
+        med = np.median(mobs[i])
+        print('MobData: {med}')
 
     #print(people_per_region(regioni='Lazio'))
     #print(people_per_country(countries='Italy'))
 
-    pass
