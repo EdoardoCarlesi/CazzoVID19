@@ -12,6 +12,10 @@ global regions_url; regions_url = 'https://www.tuttitalia.it/regioni/popolazione
 global countries_path; countries_path = 'data/World/people_per_country.csv'
 global countries_url; countries_url = 'https://www.worldometers.info/world-population/population-by-country/'
 
+# Other useful CSV files
+global countries_csv_file; country_csv_file = 'data/CountryInfo/OxCGRT_latest.csv'
+global mobility_file; mobility_file='https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
+
 
 def init_data():
     """ Check if tables are there else scrap them from the web """
@@ -133,7 +137,6 @@ def people_per_region(regions=None):
 def country_data(countries=None, populations=None, verbose=False):
     """ This reads and formats the full Oxford dataset """
 
-    csv_file = 'data/CountryInfo/OxCGRT_latest.csv'
 
     data = pd.read_csv(csv_file)
 
