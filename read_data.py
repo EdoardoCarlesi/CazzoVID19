@@ -13,8 +13,9 @@ global countries_path; countries_path = 'data/World/people_per_country.csv'
 global countries_url; countries_url = 'https://www.worldometers.info/world-population/population-by-country/'
 
 # Other useful CSV files
-global countries_csv_file; country_csv_file = 'data/CountryInfo/OxCGRT_latest.csv'
-global mobility_csv_full; mobility_csv_full='https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
+global mobility_url; mobility_url = 'https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
+global countries_csv_file; country_csv_file = 'data/World/OxCGRT_latest.csv'
+global mobility_csv_full; mobility_csv_full='data/World/Global_Mobility_Report.csv'
 global mobility_csv_reduced; mobility_csv_reduced='data/World/Global_Mobility_Report_Reduced.csv'
 
 
@@ -80,19 +81,24 @@ def init_data():
         # Export file to CSV
         data_fix.to_csv(regions_path)
 
-        print('Done.')
-
     # Check mobility data and compress
     if os.path.isfile(mobility_csv_reduced):
         pass
     else:
         print('Compressing mobility data...')
         col_region = 'sub_region_1'
-        mobility = pd.read_csv(mobility_csv_full)
-        data = data[data[col_region].isnan()]
 
-        data.to_csv(mobility_csv_reduced)
-        print(data.head())
+        if os.path.isfile(mobility_csv_full) == False:
+            print(f'{mobility_csv_full} not found, downloading...')
+            bash_command = "wget https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv data/World/"
+            os.system(bash_command)
+
+        mobility = pd.read_csv(mobility_csv_full)
+        mobility = mobility[mobility[col_region].isnull()]
+
+        mobility.to_csv(mobility_csv_reduced)
+
+        print('Done.')
 
     return None
 
@@ -100,25 +106,25 @@ def init_data():
 def mobility(countries=None):
     """ Returns mobility daya for a list of countries """
 
-    print('Reading mobility data...')
+    print(f'Reading compressed mobility data from {mobility_csv_reduced}')
 
     country_col = 'country_region'
     recreation_col = 'retail_and_recreation_percent_change_from_baseline'
 
     data = pd.read_csv(mobility_csv_reduced)
 
-    print(data.head())
-
     mobs = []
+    meds = []
 
     for country in countries:
-        this_mob = data[data[country_col] == country]
+        this_mob = data[data[country_col] == country][recreation_col].values
         mobs.append(np.array(this_mob, dtype=float))
-        print(this_mob)
+        meds.append(np.median(this_mob))
 
     print('Done.')
 
-    return mobs
+    return mobs, meds
+
 
 def people_per_country(countries=None):
     """ Read world population data from a table which can be scraped from the web """
@@ -352,7 +358,7 @@ if __name__ == "__main__":
 
     for i in range(0, len(countries)):
         med = np.median(mobs[i])
-        print('MobData: {med}')
+        print(f'{countries[i]} MobData: {med}')
 
     #print(people_per_region(regioni='Lazio'))
     #print(people_per_country(countries='Italy'))
