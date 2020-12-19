@@ -17,6 +17,7 @@ global mobility_url; mobility_url = 'https://www.gstatic.com/covid19/mobility/Gl
 global countries_csv_file; country_csv_file = 'data/World/OxCGRT_latest.csv'
 global mobility_csv_full; mobility_csv_full='data/World/Global_Mobility_Report.csv'
 global mobility_csv_reduced; mobility_csv_reduced='data/World/Global_Mobility_Report_Reduced.csv'
+global mobility_csv_italy; mobility_csv_italy='data/Italy/Global_Mobility_Report_Italy.csv'
 
 
 def init_data():
@@ -81,37 +82,56 @@ def init_data():
         # Export file to CSV
         data_fix.to_csv(regions_path)
 
-    # Check mobility data and compress
+    # Check mobility data and export only regions of interest
+    col_region = 'sub_region_1'
+    col_country = 'country_region'
+
     if os.path.isfile(mobility_csv_reduced):
         pass
     else:
         print('Compressing mobility data...')
-        col_region = 'sub_region_1'
 
+        # If the reduced mobility hasn't been produced yet, then download it
         if os.path.isfile(mobility_csv_full) == False:
             print(f'{mobility_csv_full} not found, downloading...')
             bash_command = "wget https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv data/World/"
             os.system(bash_command)
-
+        
+        # Now read the file and remove the details, export entire country data only
         mobility = pd.read_csv(mobility_csv_full)
         mobility = mobility[mobility[col_region].isnull()]
-
         mobility.to_csv(mobility_csv_reduced)
 
-        print('Done.')
+    # Same thing for the Italian data ordered by region
+    if os.path.isfile(mobility_csv_italy) == False:
+    
+        print(f'Exporting Italian mobility data to {mobility_csv_italy}')
+        mobility = pd.read_csv(mobility_csv_full)
+        mobility = mobility[mobility[col_country] == 'Italy']
+        mobility.to_csv(mobility_csv_italy)
+
+    print('Done.')
 
     return None
 
 
-def mobility(countries=None):
+def mobility(countries=None, do_regions=False):
     """ Returns mobility daya for a list of countries """
 
     print(f'Reading compressed mobility data from {mobility_csv_reduced}')
 
+    regions_col_1 = 'sub_region_1'
+    regions_col_2 = 'sub_region_2'
     country_col = 'country_region'
     recreation_col = 'retail_and_recreation_percent_change_from_baseline'
 
-    data = pd.read_csv(mobility_csv_reduced)
+    if do_regions:
+        data = pd.read_csv(mobility_csv_italy)
+        data = data[data[regions_col_2].isnull()]
+        print(data.head())
+
+    else:
+        data = pd.read_csv(mobility_csv_reduced)
 
     mobs = []
     meds = []

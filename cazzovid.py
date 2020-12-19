@@ -99,9 +99,7 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
             if normalize:
                 #values = data[select].values[0:t_max-t_min][::-1]
                 values = data[select].values[0:t_max-t_min]
-                print(values)
                 values0 = np.max(values[np.logical_not(np.isnan(values))])
-                print(values0)
                 print(f'N Values: {len(values)}, max:{values0}')
 
                 values = values/values0
@@ -166,13 +164,8 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
 if __name__ == "__main__":
     """ The main is a wrapper to select the kind of analysis and compare curves of regions or countries """
 
-    #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
-    #countries = ['Sweden', 'Italy']
-    #countries = ['Italy', 'Belgium', 'Sweden']
-    #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
-    #countries = ['Sardegna', 'Friuli Venezia Giulia', 'Lazio', 'Abruzzo'] 
-    #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany'] 
-    countries = ['Sweden', 'Italy', 'Germany', 'Austria']
+    '''
+    countries = ['Sweden', 'Italy', 'Germany', 'Austria']; do_regions=False
     #countries.append('Peru')
     countries.append('Switzerland')
     countries.append('Norway')
@@ -193,7 +186,10 @@ if __name__ == "__main__":
     #countries.append('Chile')
     #countries.append('Argentina')
     #countries = ['Switzerland', 'Hungary', 'Austria']
-    #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Sicilia', 'Veneto', 'Campania']
+    '''
+
+    # TODO: fix the regions! Put some dictionary to correct the names
+    countries = ['Abruzzo']; do_regions = True
 
     #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
     #columns = ['confirmed_smooth', 'confirmed']
@@ -212,12 +208,12 @@ if __name__ == "__main__":
 
     # Set some parameters
     n_smooth = 7
-    t_min = 0
+    t_min = 40
     t_max =  325
 
     # Run the program
     meds, tots = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=False)
-    mobilities, medians = rd.mobility(countries=countries)
+    mobilities, medians = rd.mobility(countries=countries, do_regions=do_regions)
 
     values = tots
 
