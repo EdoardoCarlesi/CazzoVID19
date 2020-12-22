@@ -159,7 +159,7 @@ if __name__ == "__main__":
     #countries = ['Sardegna', 'Friuli Venezia Giulia', 'Lazio', 'Abruzzo'] 
     #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany'] 
     #countries = ['Sweden', 'Italy', 'Germany']
-    countries = ['Switzerland', 'Hungary', 'Austria']
+    countries = ['Switzerland', 'Hungary', 'Austria', 'Sweden']
     #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Sicilia', 'Veneto', 'Campania']
 
     #columns = ['confirmed_variation_smooth', 'confirmed_smooth']

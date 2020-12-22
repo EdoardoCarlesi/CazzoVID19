@@ -13,7 +13,7 @@ global countries_path; countries_path = 'data/World/people_per_country.csv'
 global countries_url; countries_url = 'https://www.worldometers.info/world-population/population-by-country/'
 
 # Other useful CSV files
-global countries_csv_file; country_csv_file = 'data/CountryInfo/OxCGRT_latest.csv'
+global countries_csv_file; country_csv_file = 'data/World/OxCGRT_latest.csv'
 global mobility_csv_full; mobility_csv_full='https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
 global mobility_csv_reduced; mobility_csv_reduced='data/World/Global_Mobility_Report_Reduced.csv'
 
