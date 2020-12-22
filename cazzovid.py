@@ -33,11 +33,12 @@ def forward_prediction(days_fwd=1, model=None, start=None):
     return fwd
 
 
-def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_max=320, t_min=250):
+def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_max=320, t_min=250, n_days=1, show=True):
     """ Fit data from various countries/regions to Gompertz curve """
 
-    # How many days forward for the target and on how many days should we smooth (rolling average)
-    n_days = 1
+    # Median and total values for the indicator which will be returned
+    medians = []
+    totals = []
 
     # What kind of analysis?
     montecarlo = False
@@ -98,9 +99,7 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
             if normalize:
                 #values = data[select].values[0:t_max-t_min][::-1]
                 values = data[select].values[0:t_max-t_min]
-                print(values)
                 values0 = np.max(values[np.logical_not(np.isnan(values))])
-                print(values0)
                 print(f'N Values: {len(values)}, max:{values0}')
 
                 values = values/values0
@@ -108,6 +107,7 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
                 values = values*values0
                 values = values/pop0
 
+                total = np.sum(values[np.isfinite(values)])
                 median = np.median(values[np.isfinite(values)])
                 stddev = np.std(values[~np.isnan(values)])
                 skewne = scipy.stats.skew(values[np.isfinite(values)])
@@ -116,6 +116,9 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
                 print(f'Normalized , median: {median} std: {stddev} skew: {skewne} kurtosis: {kurtos} excess: {excess} for {country}')
                 #sns.kdeplot(values[np.isfinite(values)])
                 #plt.show()
+            
+                medians.append(median)
+                totals.append(total)
 
             data_label = 'data_'+select+'_'+country
             fit_label = 'fit_'+select+'_'+country
@@ -138,7 +141,16 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
                     plt.plot(ts, g_mc, label=mc_label) 
 
     plt.legend()
-    plt.show()
+ 
+    if show:
+        plt.show()
+
+    else:
+        plt.cla()
+        plt.clf()
+        plt.close()
+
+    return medians, totals
 
     '''
         plt.show(block=False)
@@ -156,11 +168,35 @@ if __name__ == "__main__":
     #countries = ['Sweden', 'Italy']
     #countries = ['Italy', 'Belgium', 'Sweden']
     #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
-    #countries = ['Sardegna', 'Friuli Venezia Giulia', 'Lazio', 'Abruzzo'] 
     #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany'] 
     #countries = ['Sweden', 'Italy', 'Germany']
-    countries = ['Switzerland', 'Hungary', 'Austria', 'Sweden']
-    #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Sicilia', 'Veneto', 'Campania']
+    countries = ['Switzerland', 'Hungary', 'Austria']
+
+    do_regions = False
+
+    #countries.append('Japan')
+    #countries.append('Sweden')
+    #countries.append('Denmark')
+    #countries.append('Serbia')
+    #countries.append('France')
+    countries.append('Slovakia')
+    countries.append('Slovenia')
+    #countries.append('Italy')
+
+    #countries.append('Peru')
+    #countries.append('Switzerland')
+    #countries.append('Norway')
+    #countries.append('Finland')
+    #countries.append('Belgium')
+    #countries.append('Denmark')
+
+    # TODO: fix the regions! Put some dictionary to correct the names when dealing with MOBILITY DATA
+    #countries = ['Abruzzo']; do_regions = True
+    #countries.append('Lazio')
+    #countries.append('Piemonte')
+    #countries.append('Veneto')
+    #countries.append('Lombardia')
+    #countries.append('Sardegna')
 
     #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
     #columns = ['confirmed_smooth', 'confirmed']
@@ -179,11 +215,22 @@ if __name__ == "__main__":
 
     # Set some parameters
     n_smooth = 7
-    t_min = 20
-    t_max =  300
+    t_min = 200
+    t_max =  330
 
     # Run the program
-    compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min)
+    meds, tots = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=True)
+    mobilities, medians = rd.mobility(countries=countries, do_regions=do_regions)
+
+    values = tots
+
+    plt.scatter(medians, values)
+
+    for i, txt in enumerate(countries):
+        plt.text(medians[i], values[i], txt)
+
+    plt.tight_layout()
+    #plt.show()
 
     # Done
     exit()

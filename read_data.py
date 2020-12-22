@@ -13,9 +13,11 @@ global countries_path; countries_path = 'data/World/people_per_country.csv'
 global countries_url; countries_url = 'https://www.worldometers.info/world-population/population-by-country/'
 
 # Other useful CSV files
+global mobility_url; mobility_url = 'https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
 global countries_csv_file; country_csv_file = 'data/World/OxCGRT_latest.csv'
-global mobility_csv_full; mobility_csv_full='https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
+global mobility_csv_full; mobility_csv_full='data/World/Global_Mobility_Report.csv'
 global mobility_csv_reduced; mobility_csv_reduced='data/World/Global_Mobility_Report_Reduced.csv'
+global mobility_csv_italy; mobility_csv_italy='data/Italy/Global_Mobility_Report_Italy.csv'
 
 
 def init_data():
@@ -80,45 +82,69 @@ def init_data():
         # Export file to CSV
         data_fix.to_csv(regions_path)
 
-        print('Done.')
+    # Check mobility data and export only regions of interest
+    col_region = 'sub_region_1'
+    col_country = 'country_region'
 
-    # Check mobility data and compress
     if os.path.isfile(mobility_csv_reduced):
         pass
     else:
         print('Compressing mobility data...')
-        col_region = 'sub_region_1'
-        mobility = pd.read_csv(mobility_csv_full)
-        data = data[data[col_region].isnan()]
 
-        data.to_csv(mobility_csv_reduced)
-        print(data.head())
+        # If the reduced mobility hasn't been produced yet, then download it
+        if os.path.isfile(mobility_csv_full) == False:
+            print(f'{mobility_csv_full} not found, downloading...')
+            bash_command = "wget https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv data/World/"
+            os.system(bash_command)
+        
+        # Now read the file and remove the details, export entire country data only
+        mobility = pd.read_csv(mobility_csv_full)
+        mobility = mobility[mobility[col_region].isnull()]
+        mobility.to_csv(mobility_csv_reduced)
+
+    # Same thing for the Italian data ordered by region
+    if os.path.isfile(mobility_csv_italy) == False:
+    
+        print(f'Exporting Italian mobility data to {mobility_csv_italy}')
+        mobility = pd.read_csv(mobility_csv_full)
+        mobility = mobility[mobility[col_country] == 'Italy']
+        mobility.to_csv(mobility_csv_italy)
+
+    print('Done.')
 
     return None
 
 
-def mobility(countries=None):
+def mobility(countries=None, do_regions=False):
     """ Returns mobility daya for a list of countries """
 
-    print('Reading mobility data...')
+    print(f'Reading compressed mobility data from {mobility_csv_reduced}')
 
+    regions_col_1 = 'sub_region_1'
+    regions_col_2 = 'sub_region_2'
     country_col = 'country_region'
     recreation_col = 'retail_and_recreation_percent_change_from_baseline'
 
-    data = pd.read_csv(mobility_csv_reduced)
+    if do_regions:
+        data = pd.read_csv(mobility_csv_italy)
+        data = data[data[regions_col_2].isnull()]
+        print(data.head())
 
-    print(data.head())
+    else:
+        data = pd.read_csv(mobility_csv_reduced)
 
     mobs = []
+    meds = []
 
     for country in countries:
-        this_mob = data[data[country_col] == country]
+        this_mob = data[data[country_col] == country][recreation_col].values
         mobs.append(np.array(this_mob, dtype=float))
-        print(this_mob)
+        meds.append(np.median(this_mob))
 
     print('Done.')
 
-    return mobs
+    return mobs, meds
+
 
 def people_per_country(countries=None):
     """ Read world population data from a table which can be scraped from the web """
@@ -226,7 +252,7 @@ def country_data(countries=None, populations=None, verbose=False):
     plt.show()
 
 
-def smooth_data(data=None, smooth=3, invert=False):
+def smooth_data(data=None, smooth=3, invert=False, inverse_smooth=True):
     """ Smooth the columns over a rolling average of n=smooth days and remove outliers """
 
     def remove_outliers(x):
@@ -236,6 +262,18 @@ def smooth_data(data=None, smooth=3, invert=False):
             x = 0.0
 
         return x
+
+    
+    def inverse_smooth(x):
+        """ Take the average over n_smooth days before the last one """
+
+        x_new = np.zeros(len(x))
+
+        for i, elem in enumerate(x):
+            x_new[i] = np.mean(x[i:i+smooth])
+
+        return x_new
+
 
     if smooth > 1:
         print(f'Smoothing data over {smooth} days')
@@ -257,17 +295,20 @@ def smooth_data(data=None, smooth=3, invert=False):
         col_velocity =  col + '_velocity' 
         col_acceleration = col + '_acceleration'
 
+        if inverse_smooth:
+            data[col_smooth] = inverse_smooth(data[col].T.values) #(inverse_smooth)
+        else:
+            data[col_smooth] = data[col].rolling(window=smooth).mean()
+
         # TODO 
         if invert:
-            data[col_smooth] = data[col].rolling(window=smooth).mean()
             data[col_variation] = data[col][::-1].pct_change()
             data[col_variation_smooth] = data[col_smooth][::-1].pct_change()
             data[col_velocity] = np.gradient(data[col_smooth])
             data[col_acceleration] = np.gradient(data[col_velocity])
         else:
-            data[col_smooth] = data[col].rolling(window=smooth).mean()
-            data[col_variation] = data[col][::-1].pct_change()
-            data[col_variation_smooth] = data[col_smooth][::-1].pct_change()
+            data[col_variation] = data[col].pct_change()
+            data[col_variation_smooth] = data[col_smooth].pct_change()
             data[col_velocity] = np.gradient(data[col_smooth])
             data[col_acceleration] = np.gradient(data[col_velocity])
 
@@ -312,6 +353,7 @@ def extract_country(n_days=1, country=None, smooth=7):
     confirmed_file = 'time_series_covid19_confirmed_global.csv'
     recovered_file = 'time_series_covid19_recovered_global.csv'
     col_name = 'Country/Region'
+    province_name = 'Province/State'
     
     confirmed = pd.read_csv(covid_path + confirmed_file)
     deaths = pd.read_csv(covid_path + deaths_file)
@@ -323,7 +365,7 @@ def extract_country(n_days=1, country=None, smooth=7):
     for i, data in enumerate([confirmed, deaths]):
 
         dates = data.columns[4:]
-        row = data[data[col_name] == country].T.iloc[4:].values
+        row = data[(data[col_name] == country) & (data[province_name].isnull())].T.iloc[4:].values
         row = np.array(row)
         row = np.reshape(row, len(row))
     
@@ -352,7 +394,7 @@ if __name__ == "__main__":
 
     for i in range(0, len(countries)):
         med = np.median(mobs[i])
-        print('MobData: {med}')
+        print(f'{countries[i]} MobData: {med}')
 
     #print(people_per_region(regioni='Lazio'))
     #print(people_per_country(countries='Italy'))
