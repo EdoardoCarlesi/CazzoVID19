@@ -198,11 +198,13 @@ def people_per_region(regions=None):
     return populations
 
 
-def country_data(countries=None, populations=None, verbose=False):
+def country_data(countries=None, verbose=False, day_start=0):
     """ This reads and formats the full Oxford dataset """
 
+    csv_file = 'data/World/OxCGRT_latest.csv'
 
     data = pd.read_csv(csv_file)
+    populations = people_per_region(regions=countries)
 
     if verbose:
         print(data.info())
@@ -220,36 +222,48 @@ def country_data(countries=None, populations=None, verbose=False):
     col_test = cols[28]
     col_trace = cols[29]
     col_mask = cols[32]
-    col_stringency = cols[37]
-    col_response = cols[41]
-    col_contain = cols[43]
-    col_deaths = cols[36]
+    col_stringency = cols[41]
+    col_response = cols[44]
+    col_contain = cols[45]
+    col_deaths = cols[38]
 
-    countries = ['Italy', 'Sweden', 'Denmark', 'Germany', 'Spain', 'France', 'Russia', 'Japan', 'Peru', 'Brazil']; 
     populations = people_per_country(countries=countries)
 
-    for i, country in enumerate(countries):
-        pop = populations[i]
-        sel_data = data[data[col_country] == country]
-    
-        #col_use = col_mask
-        #col_use = col_stringency
-        col_x = col_response
-        col_y = col_deaths
+    masks = []
+    responses = []
+    stringencies = []
 
-        n_use = len(sel_data[col_x])
+    print(col_response, col_stringency, col_contain)
+
+    for i, country in enumerate(countries):
+        pop = populations[i] / 1.e+6
+        sel_data = data[data[col_country] == country][day_start:]
+        #sel_data = data[data[col_country] == country]
+        sel_data = sel_data[sel_data['RegionName'].isnull()]
+        
+        col_i = col_mask
+        col_ii = col_response
+        col_iii = col_stringency
+
+        n_use = len(sel_data[col_i])
     
         print(f'Using {n_use} points for {country}')
 
-        sel_data = sel_data[[col_x, col_y]].dropna()
+        #sel_data = sel_data[[col_x, col_y]].dropna()
 
-        this_x = [i for i in range(0, n_use)]
+        masks.append(sel_data[col_i].mean())
+        responses.append(sel_data[col_ii].mean())
+        stringencies.append(sel_data[col_iii].mean())
+
+        #this_x = [i for i in range(0, n_use)]
 
         #plt.plot(sel_data[col_x].mean(), sel_data[col_y].mean(), label=country)
-        plt.scatter(sel_data[col_x].mean(), sel_data[col_y].mean()/pop, label=country)
+        #plt.scatter(sel_data[col_x].mean(), sel_data[col_y].mean()/pop, label=country)
     
-    plt.legend()
-    plt.show()
+    #plt.legend()
+    #plt.show()
+
+    return masks, responses, stringencies
 
 
 def smooth_data(data=None, smooth=3, invert=False, inverse_smooth=True):
@@ -309,7 +323,7 @@ def smooth_data(data=None, smooth=3, invert=False, inverse_smooth=True):
         else:
             data[col_variation] = data[col].pct_change()
             data[col_variation_smooth] = data[col_smooth].pct_change()
-            data[col_velocity] = np.gradient(data[col_smooth])
+            data[col_velocity] = -np.gradient(data[col_smooth])
             data[col_acceleration] = np.gradient(data[col_velocity])
 
     return data
