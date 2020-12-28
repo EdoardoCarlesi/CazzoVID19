@@ -115,7 +115,7 @@ def init_data():
     return None
 
 
-def mobility(countries=None, do_regions=False):
+def mobility(countries=None, do_regions=False, day_init=0, day_end=None):
     """ Returns mobility daya for a list of countries """
 
     print(f'Reading compressed mobility data from {mobility_csv_reduced}')
@@ -137,7 +137,7 @@ def mobility(countries=None, do_regions=False):
     meds = []
 
     for country in countries:
-        this_mob = data[data[country_col] == country][recreation_col].values
+        this_mob = data[data[country_col] == country][recreation_col].values[day_init:day_end]
         mobs.append(np.array(this_mob, dtype=float))
         meds.append(np.median(this_mob))
 
@@ -381,7 +381,13 @@ def extract_country(n_days=1, country=None, smooth=7):
         dates = data.columns[4:]
         row = data[(data[col_name] == country) & (data[province_name].isnull())].T.iloc[4:].values
         row = np.array(row)
-        row = np.reshape(row, len(row))
+
+        if len(row) == 0:
+            print(f'{country} has zero points')
+            
+            return data_full
+        else:
+            row = np.reshape(row, len(row))
     
         # Date & differential number of cases
         data_full['date'] = dates

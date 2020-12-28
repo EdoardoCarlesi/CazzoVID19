@@ -187,7 +187,9 @@ if __name__ == "__main__":
 
     #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
     #countries = ['Sweden', 'Italy']
-    countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel']
+    countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
+            'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
+            'Croatia', 'Mexico', 'Armenia', 'Qatar', 'Panama', 'France', 'Moldova']
     #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
     #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany', 'France', 'Netherlands'] 
     #countries = ['Sweden', 'Italy', 'Germany']
@@ -240,25 +242,29 @@ if __name__ == "__main__":
 
     # Set some parameters
     n_smooth = 7
-    t_min = 240
-    t_max =  330
+    t_min = 250
+    t_max =  340
 
     # Run the program
     #meds, tots = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=True)
-    meds, tots = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=False)
-    mobilities, medians = rd.mobility(countries=countries, do_regions=do_regions)
+    median_daily, tot_per_million = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=False)
+    mobility_daily, median_mobility = rd.mobility(countries=countries, do_regions=do_regions, day_init=t_min, day_end=t_max)
 
     masks, responses, stringencies = rd.country_data(countries=countries, verbose=True, day_start=t_min)
 
-    #values = tots
-    #plt.scatter(medians, values)
+    #values_x = median_mobility; plt.xlabel('Median daily mobility baseline reduction %')
+    #values_x = masks; plt.xlabel('Mask rules index')
+    values_x = responses; plt.xlabel('Government Response')
+    values_y = tot_per_million; plt.ylabel(f'Median daily {columns[0]} per million')
+
+    plt.scatter(values_x, values_y)
 
     for i, txt in enumerate(countries):
-        print(f'{txt} Mask={masks[i]} Response={responses[i]} Stringency={stringencies[i]} Mobility={medians[i]} Deaths={meds[i]}')
-        #plt.text(medians[i], values[i], txt)
+        print(f'{txt} Mask={masks[i]} Response={responses[i]} Stringency={stringencies[i]}')
+        plt.text(values_x[i], values_y[i], txt)
 
-    #plt.tight_layout()
-    #plt.show()
+    plt.tight_layout()
+    plt.show()
 
     # Done
     exit()
