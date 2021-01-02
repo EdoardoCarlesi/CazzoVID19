@@ -34,7 +34,7 @@ def forward_prediction(days_fwd=1, model=None, start=None):
     return fwd
 
 
-def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_max=320, t_min=250, n_days=1, show=True):
+def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_max=320, t_min=250, n_days=1, show=True, invert=True):
     """ Fit data from various countries/regions to Gompertz curve """
 
     # Median and total values for the indicator which will be returned
@@ -153,8 +153,12 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
                 t_labels.append(this_t) 
                 i_labels.append(i * 7)
 
-            plt.xticks(i_labels, t_labels, rotation='vertical')
-            plt.plot(ts, values, label=data_label)
+            if invert:
+                plt.xticks(i_labels, t_labels[::-1], rotation='vertical')
+                plt.plot(ts[::-1], values, label=data_label)
+            else:
+                plt.xticks(i_labels, t_labels, rotation='vertical')
+                plt.plot(ts, values, label=data_label)
 
             # In case we want to add some analytical function to this mess
             if do_gompertz:
@@ -187,12 +191,12 @@ if __name__ == "__main__":
 
     #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
     #countries = ['Sweden', 'Italy']
-    countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
-            'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
-            'Croatia', 'Mexico', 'Armenia', 'Qatar', 'Panama', 'France', 'Moldova']
+    #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
+    #        'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
+    #        'Croatia', 'Mexico', 'Armenia', 'Qatar', 'Panama', 'France', 'Moldova']
     #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
     #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany', 'France', 'Netherlands'] 
-    #countries = ['Sweden', 'Italy', 'Germany']
+    countries = ['Sweden', 'Italy', 'Germany', 'Ireland']
     #countries = ['Switzerland', 'Hungary', 'Austria']
 
     do_regions = False
@@ -226,8 +230,8 @@ if __name__ == "__main__":
     #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
     #columns = ['confirmed_smooth', 'confirmed']
     #columns = ['confirmed_smooth', 'deaths_smooth']
-    columns = ['deaths_smooth']
-    #columns = ['confirmed_smooth']
+    #columns = ['deaths_smooth']
+    columns = ['confirmed_smooth']
     #columns = ['confirmed_velocity']
     #columns = ['confirmed_acceleration']
     #columns = ['deaths_smooth']
@@ -246,7 +250,7 @@ if __name__ == "__main__":
     t_max =  340
 
     # Run the program
-    #meds, tots = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=True)
+    meds, tots = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=True)
     median_daily, tot_per_million = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=False)
     mobility_daily, median_mobility = rd.mobility(countries=countries, do_regions=do_regions, day_init=t_min, day_end=t_max)
 
@@ -264,7 +268,7 @@ if __name__ == "__main__":
         plt.text(values_x[i], values_y[i], txt)
 
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
     # Done
     exit()
