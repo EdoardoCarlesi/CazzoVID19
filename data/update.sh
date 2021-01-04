@@ -3,13 +3,13 @@
 # CazzoVID-19
 # Update the files' database
 
-dir1='CountryInfo'
+dir1='World'
 dir2='Italy'
-dir3='World'
 
-file1='https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv'
+url1='https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv'
 url2='https://github.com/pcm-dpc/COVID-19.git'
 url3='https://github.com/CSSEGISandData/COVID-19.git'
+url4='https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv'
 
 if [ -d "$dir1" ]
 then
@@ -20,8 +20,10 @@ else
 fi
 
 cd $dir1
-rm *.csv
-wget $file1
+rm *'_latest.csv'
+rm *'_Report.csv'
+wget $url1
+wget $url4
 cd ..
 
 if [ -d "$dir2" ]
@@ -38,17 +40,17 @@ cd $dir2
 git pull origin master
 cd ..
 
-if [ -d "$dir3" ]
+if [ -d "$dir1" ]
 then
-	echo "Found " $dir3
+	echo "Found " $dir1
 else
-	mkdir $dir3
-	cd $dir3
+	mkdir $dir1
+	cd $dir1
 	git init 
-	git remote add origin $url3 
+	git remote add origin $url1
 fi
 
-cd $dir3
+cd $dir1
 git pull origin master
 cd ..
 

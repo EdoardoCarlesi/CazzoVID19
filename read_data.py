@@ -1,3 +1,4 @@
+from urllib.request import Request, urlopen     # Import some relevant libraries just for this task
 import pandas as pd
 import numpy as np
 import functions as f
@@ -7,6 +8,12 @@ import os
 # General url settings for Italian regions
 global regions_path; regions_path = 'data/Italy/popolazione_per_region.csv'
 global regions_url; regions_url = 'https://www.tuttitalia.it/regioni/popolazione/'
+
+# US States population
+global states_path; states_path = 'data/World/population_per_us_state.csv'
+global states_url; 
+#states_url='https://simple.wikipedia.org/wiki/List_of_U.S._states_by_population'
+states_url = 'https://www.infoplease.com/us/states/state-population-by-rank'
 
 # Set reference urls for global csv file
 global countries_path; countries_path = 'data/World/people_per_country.csv'
@@ -30,8 +37,6 @@ def init_data():
     
     # Otherwise get the region data from an url
     else:
-        # Import some relevant libraries just for this task
-        from urllib.request import Request, urlopen
 
         print(f'Reading population data from {countries_url}')
 
@@ -110,12 +115,28 @@ def init_data():
         mobility = mobility[mobility[col_country] == 'Italy']
         mobility.to_csv(mobility_csv_italy)
 
+    if os.path.isfile(states_path) == False:
+        print(f'Exporting US population data to {states_url}')
+ 
+        # We need to do this otherwise the request will be blocked
+        req = Request(states_url, headers={'User-Agent': 'Mozilla/5.0'})
+        webpage = urlopen(req).read()
+        
+        states_table = pd.read_html(webpage)
+
+        # Convert the scraped URL into a pandas dataframe
+        data = states_table[0]
+
+        # Export file to CSV
+        data.to_csv(states_path)
+
+
     print('Done.')
 
     return None
 
 
-def mobility(countries=None, do_regions=False, day_init=0, day_end=None):
+def mobility(countries=None, do_type='countries', day_init=0, day_end=None):
     """ Returns mobility daya for a list of countries """
 
     print(f'Reading compressed mobility data from {mobility_csv_reduced}')
@@ -125,13 +146,15 @@ def mobility(countries=None, do_regions=False, day_init=0, day_end=None):
     country_col = 'country_region'
     recreation_col = 'retail_and_recreation_percent_change_from_baseline'
 
-    if do_regions:
+    if do_type == 'regions':
         data = pd.read_csv(mobility_csv_italy)
         data = data[data[regions_col_2].isnull()]
-        print(data.head())
 
-    else:
+    elif do_type == 'countries':
         data = pd.read_csv(mobility_csv_reduced)
+
+    elif do_type == 'states':   # TODO
+        pass
 
     mobs = []
     meds = []
@@ -193,7 +216,33 @@ def people_per_region(regions=None):
     for region in regions:
         if region in data['Regione'].values:
             population = data[data['Regione'] == region]['Popolazione'].values[0]
-            populations.append(population)
+        else:
+            population = -1
+
+        populations.append(population)
+
+    return populations
+
+
+def people_per_state(states=None):
+    """ Read a table with states information and population """
+    
+    if isinstance(states, list):
+        pass
+    else:
+        regions = [regions]
+
+    data = pd.read_csv(states_path)
+    
+    populations = []
+
+    for state in states:
+        if state in data['State'].values:
+            population = data[data['State'] == state]['Population'].values[0]
+        else:
+            population = -1
+
+        populations.append(population)
 
     return populations
 
@@ -201,9 +250,7 @@ def people_per_region(regions=None):
 def country_data(countries=None, verbose=False, day_start=0):
     """ This reads and formats the full Oxford dataset """
 
-    csv_file = 'data/World/OxCGRT_latest.csv'
-
-    data = pd.read_csv(csv_file)
+    data = pd.read_csv(country_csv_file)
     populations = people_per_region(regions=countries)
 
     if verbose:
@@ -227,8 +274,6 @@ def country_data(countries=None, verbose=False, day_start=0):
     col_contain = cols[45]
     col_deaths = cols[38]
 
-    populations = people_per_country(countries=countries)
-
     masks = []
     responses = []
     stringencies = []
@@ -238,7 +283,8 @@ def country_data(countries=None, verbose=False, day_start=0):
     for i, country in enumerate(countries):
         pop = populations[i] / 1.e+6
         sel_data = data[data[col_country] == country][day_start:]
-        #sel_data = data[data[col_country] == country]
+
+        # Enforce this check or things will be screwed
         sel_data = sel_data[sel_data['RegionName'].isnull()]
         
         col_i = col_mask
@@ -246,22 +292,11 @@ def country_data(countries=None, verbose=False, day_start=0):
         col_iii = col_stringency
 
         n_use = len(sel_data[col_i])
-    
         print(f'Using {n_use} points for {country}')
-
-        #sel_data = sel_data[[col_x, col_y]].dropna()
 
         masks.append(sel_data[col_i].mean())
         responses.append(sel_data[col_ii].mean())
         stringencies.append(sel_data[col_iii].mean())
-
-        #this_x = [i for i in range(0, n_use)]
-
-        #plt.plot(sel_data[col_x].mean(), sel_data[col_y].mean(), label=country)
-        #plt.scatter(sel_data[col_x].mean(), sel_data[col_y].mean()/pop, label=country)
-    
-    #plt.legend()
-    #plt.show()
 
     return masks, responses, stringencies
 
@@ -329,6 +364,36 @@ def smooth_data(data=None, smooth=3, invert=False, inverse_smooth=True):
     return data
 
 
+def extract_state(state=None, smooth=1, n_days=1):
+    """ This function is specific only for italian regions """
+
+    data = pd.read_csv(country_csv_file)
+
+    col_state = 'RegionName'
+    col_cases = 'ConfirmedCases'
+    col_deaths = 'ConfirmedDeaths'
+
+    if state not in data[col_state].unique():
+        print('State: ', region, ' is not a valid state. Try again.')
+        exit()
+
+    print(f'State selected: {state}')
+    names_states = data[col_state].unique()
+    data_clean = pd.DataFrame()
+    data_state = data[data[col_state] == state]
+
+    print(f'Total number of points for {state} is {len(data_state)}')
+    data_clean['date'] = data_state['Date'][::-1]
+    data_clean['confirmed'] = f.differential(cumulative=data_state['ConfirmedCases'][::-1].values)
+    data_clean['deaths'] = f.differential(cumulative=data_state['ConfirmedDeaths'][::-1].values)
+    #data_clean['confirmed'] = data_state['ConfirmedCases'][::-1].values
+    #data_clean['deaths'] = data_state['ConfirmedDeaths'][::-1].values
+
+    data_clean = smooth_data(data=data_clean, smooth=smooth)
+
+    return data_clean
+
+
 def extract_region(region=None, smooth=1, n_days=1):
     """ This function is specific only for italian regions """
 
@@ -351,10 +416,6 @@ def extract_region(region=None, smooth=1, n_days=1):
     data_clean['deaths'] = f.differential(cumulative=data_region['deceduti'][::-1].values)
 
     data_clean = smooth_data(data=data_clean, smooth=smooth)
-
-    #data_clean = data_clean.dropna()
-    #print(f'Total number of points for {region} (clean) is {len(data_clean)}')
-    #print(data_clean.head(20))
 
     return data_clean
 
@@ -408,13 +469,22 @@ if __name__ == "__main__":
     """ Test the routines """
 
     countries = ['Italy', 'France', 'Sweden']
-
+    states = ['South Dakota', 'Florida', 'North Dakota', 'California']
     init_data()
+
+    pops = people_per_state(states=states)
+
+    for i, p in enumerate(pops):
+        print(f'{states[i]} {p}')
+        state = extract_state(state=states[i])
+
+    '''
     mobs = mobility(countries=countries)
 
     for i in range(0, len(countries)):
         med = np.median(mobs[i])
         print(f'{countries[i]} MobData: {med}')
+    '''
 
     #print(people_per_region(regioni='Lazio'))
     #print(people_per_country(countries='Italy'))
