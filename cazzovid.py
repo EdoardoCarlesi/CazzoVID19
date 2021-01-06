@@ -35,7 +35,7 @@ def forward_prediction(days_fwd=1, model=None, start=None):
     return fwd
 
 
-def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_max=320, t_min=250, n_days=1, show=True, do_type='countries'):
+def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_max=320, t_min=250, n_days=1, show=True, do_type='countries', invert=False):
     """ Fit data from various countries/regions to Gompertz curve """
 
     # Median and total values for the indicator which will be returned
@@ -100,7 +100,7 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
                 if do_type == 'countries':
                     times = data['date'].values[::-1][0:d_t]
                 elif do_type == 'regions':
-                    times = data['date'].values[::-1][d_t::]
+                    times = data['date'].values[:d_t]
                 elif do_type == 'states':
                     times = data['date'].values[::-1][t_min:][::-1]
 
@@ -189,62 +189,65 @@ if __name__ == "__main__":
     """ The main is a wrapper to select the kind of analysis and compare curves of regions or countries """
 
     #do_type = 'countries'
-    #do_type = 'regions'
-    do_type = 'states'
+    do_type = 'regions'
+    #do_type = 'states'
     
+    if do_type == 'countries':
+        #countries = ['Sweden', 'Italy']
+        countries = ['Sweden', 'Finland', 'Norway', 'Denmark']
 
-    #countries = ['Abruzzo', 'Lombardia', 'Lazio', 'Veneto', 'Campania']
-    #countries = ['Sweden', 'Italy']
+        #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
+        #        'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
+         #       'Croatia', 'Mexico', 'Armenia', 'Qatar', 'Panama', 'France', 'Moldova']
+        #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Argentina', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
+         #       'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
+          #      'Croatia', 'Mexico', 'Qatar', 'Panama', 'Moldova']
 
-    #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
-    #        'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
-     #       'Croatia', 'Mexico', 'Armenia', 'Qatar', 'Panama', 'France', 'Moldova']
-    #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Argentina', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
-     #       'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
-      #      'Croatia', 'Mexico', 'Qatar', 'Panama', 'Moldova']
-
-    #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
-    #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany', 'France', 'Netherlands'] 
-    #countries = ['Sweden', 'Italy', 'Germany']
-    #countries = ['Switzerland', 'Hungary', 'Austria']
+        #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
+        #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany', 'France', 'Netherlands'] 
+        #countries = ['Sweden', 'Italy', 'Germany']
+        #countries = ['Switzerland', 'Hungary', 'Austria']
 
 
-    #countries.append('Japan')
-    #countries.append('United Kingdom')
-    #countries.append('Sweden')
-    #countries.append('Denmark')
-    #countries.append('Serbia')
-    #countries.append('France')
-    #countries.append('Slovakia')
-    #countries.append('Slovenia')
-    #countries.append('Italy')
+        #countries.append('Japan')
+        #countries.append('United Kingdom')
+        #countries.append('Sweden')
+        #countries.append('Denmark')
+        #countries.append('Serbia')
+        #countries.append('France')
+        #countries.append('Slovakia')
+        #countries.append('Slovenia')
+        #countries.append('Italy')
 
-    #countries.append('Peru')
-    #countries.append('Switzerland')
-    #countries.append('Norway')
-    #countries.append('Finland')
-    #countries.append('Belgium')
-    #countries.append('Denmark')
+        #countries.append('Peru')
+        #countries.append('Switzerland')
+        #countries.append('Norway')
+        #countries.append('Finland')
+        #countries.append('Belgium')
+        #countries.append('Denmark')
 
     # US States
-    countries = ['Florida', 'California'] #, 'North Dakota', 'South Dakota']
-    #countries = ['Florida', 'California', 'North Dakota', 'South Dakota']
+    elif do_type == 'states':
+        countries = ['Florida', 'California'] #, 'North Dakota', 'South Dakota']
+        #countries = ['Florida', 'California', 'North Dakota', 'South Dakota']
 
-    # TODO: fix the regions! Put some dictionary to correct the names when dealing with MOBILITY DATA
-    #do_regions = True
-    #countries = ['Abruzzo', 'Lazio', 'Liguria']
-    #countries = ['Abruzzo']; do_regions = True
-    #countries.append('Lazio')
-    #countries.append('Piemonte')
-    #countries.append('Veneto')
-    #countries.append('Lombardia')
-    #countries.append('Sardegna')
+    # Italian regions
+    elif do_type == 'regions':
+        # TODO: fix the regions! Put some dictionary to correct the names when dealing with MOBILITY DATA
+        #do_regions = True
+        countries = ['Abruzzo', 'Lazio', 'Liguria', 'Veneto', 'Sicilia']
+        #countries.append('Lazio')
+        #countries.append('Piemonte')
+        #countries.append('Veneto')
+        #countries.append('Lombardia')
+        #countries.append('Sardegna')
 
+    # Select columns for the analysis
     #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
     #columns = ['confirmed_smooth', 'confirmed']
     #columns = ['confirmed_smooth', 'deaths_smooth']
-    #columns = ['deaths_smooth']
-    columns = ['confirmed_smooth']
+    columns = ['deaths_smooth']
+    #columns = ['confirmed_smooth']
     #columns = ['confirmed_velocity']
     #columns = ['confirmed_acceleration']
     #columns = ['deaths_smooth']
@@ -259,8 +262,8 @@ if __name__ == "__main__":
 
     # Set some parameters
     n_smooth = 14
-    t_min = 20
-    t_max =  340
+    t_min = 40
+    t_max =  354
 
     invert = False
     show = True
@@ -268,7 +271,7 @@ if __name__ == "__main__":
     # Run the program
     median_daily, tot_per_million = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=show, do_type=do_type, invert=invert)
     #median_daily, tot_per_million = compare_curves(countries=countries, columns=columns, n_smooth=n_smooth, t_max=t_max, t_min=t_min, show=False)
-    #mobility_daily, median_mobility = rd.mobility(countries=countries, do_type=do_type, day_init=t_min, day_end=t_max)
+    mobility_daily, median_mobility = rd.mobility(countries=countries, do_type=do_type, day_init=t_min, day_end=t_max)
 
     masks, responses, stringencies = rd.country_data(countries=countries, verbose=True, day_start=t_min)
 
