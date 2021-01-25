@@ -204,7 +204,8 @@ if __name__ == "__main__":
     
     if do_type == 'countries':
         #countries = ['Sweden', 'Italy']
-        countries = ['Sweden', 'Finland', 'Norway', 'Japan', 'Austria', 'Switzerland', 'Germany', 'Spain']
+        #countries = ['Sweden', 'Finland', 'Norway', 'Japan', 'Austria', 'Switzerland', 'Germany', 'Spain', 'New Zealand']
+        countries = ['Finland', 'Norway', 'Japan', 'New Zealand', 'Australia']
 
         #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
         #        'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
@@ -257,7 +258,7 @@ if __name__ == "__main__":
 
     # Set some parameters
     n_smooth = 21
-    t_min = 40
+    t_min = 100
     t_max =  354
 
     invert = True

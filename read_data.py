@@ -441,15 +441,20 @@ def extract_country(n_days=1, country=None, smooth=7):
 
         dates = data.columns[4:]
         row = data[(data[col_name] == country) & (data[province_name].isnull())].T.iloc[4:].values
-        row = np.array(row)
 
-        if len(row) == 0:
+        if len(row[0]) == 0:
             print(f'{country} has zero points')
-            
-            return data_full
-        else:
-            row = np.reshape(row, len(row))
-    
+
+            rows = data[(data[col_name] == country)].T.iloc[4:].values
+            row = np.zeros(len(rows))
+
+            for j, row_sum in enumerate(rows):
+                row[j] = np.sum(row_sum)
+
+        # Fix array type
+        row = np.array(row)
+        row = np.reshape(row, len(row))
+
         # Date & differential number of cases
         data_full['date'] = dates
         data_full[columns[i]] = f.differential(cumulative=row[::-1])
