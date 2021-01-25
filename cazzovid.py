@@ -157,8 +157,12 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
                 t_labels.append(this_t) 
                 i_labels.append(i * 7)
 
-            plt.xticks(i_labels, t_labels, rotation='vertical')
-            plt.plot(ts, values, label=data_label)
+            if invert:
+                plt.xticks(i_labels, t_labels[::-1], rotation='vertical')
+                plt.plot(ts-n_smooth, values[::-1], label=data_label)
+            else:
+                plt.xticks(i_labels, t_labels, rotation='vertical')
+                plt.plot(ts, values, label=data_label)
 
             # In case we want to add some analytical function to this mess
             if do_gompertz:
@@ -188,13 +192,19 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
 if __name__ == "__main__":
     """ The main is a wrapper to select the kind of analysis and compare curves of regions or countries """
 
-    #do_type = 'countries'
-    do_type = 'regions'
+    do_type = 'countries'
+    #do_type = 'regions'
     #do_type = 'states'
+ 
+    # Select columns for the analysis
+    columns = ['deaths_smooth']
+    #columns = ['confirmed_smooth']
+    #columns = ['deaths_acceleration']
+    #columns = ['confirmed_velocity']
     
     if do_type == 'countries':
         #countries = ['Sweden', 'Italy']
-        countries = ['Sweden', 'Finland', 'Norway', 'Denmark']
+        countries = ['Sweden', 'Finland', 'Norway', 'Japan', 'Austria', 'Switzerland', 'Germany', 'Spain']
 
         #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
         #        'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
@@ -241,31 +251,16 @@ if __name__ == "__main__":
         #countries.append('Veneto')
         #countries.append('Lombardia')
         #countries.append('Sardegna')
-
-    # Select columns for the analysis
-    #columns = ['confirmed_variation_smooth', 'confirmed_smooth']
-    #columns = ['confirmed_smooth', 'confirmed']
-    #columns = ['confirmed_smooth', 'deaths_smooth']
-    columns = ['deaths_smooth']
-    #columns = ['confirmed_smooth']
-    #columns = ['confirmed_velocity']
-    #columns = ['confirmed_acceleration']
-    #columns = ['deaths_smooth']
-    #columns = ['deaths_variation', 'deaths_smooth']
-    #columns = ['confirmed_variation', 'confirmed_smooth']
-    #columns = ['confirmed_acceleration']
-    #columns = ['deaths_acceleration']
-    #columns = ['confirmed_velocity']
-    
+   
     # Initialize data, scraping stuff from the web if needed
     rd.init_data()
 
     # Set some parameters
-    n_smooth = 14
+    n_smooth = 21
     t_min = 40
     t_max =  354
 
-    invert = False
+    invert = True
     show = True
 
     # Run the program
