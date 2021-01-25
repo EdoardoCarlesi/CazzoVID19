@@ -175,7 +175,7 @@ def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_m
 
     plt.legend()
     plt.xlabel('Day')
-    plt.ylabel('New cases per million')
+    plt.ylabel(columns[0] + ' per million')
     plt.tight_layout()
 
     if show:
@@ -205,7 +205,7 @@ if __name__ == "__main__":
     if do_type == 'countries':
         #countries = ['Sweden', 'Italy']
         #countries = ['Sweden', 'Finland', 'Norway', 'Japan', 'Austria', 'Switzerland', 'Germany', 'Spain', 'New Zealand']
-        countries = ['Finland', 'Norway', 'Japan', 'New Zealand', 'Australia']
+        countries = ['Finland', 'Norway', 'Japan', 'New Zealand', 'Australia', 'Israel']
 
         #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
         #        'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
