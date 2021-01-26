@@ -197,15 +197,16 @@ if __name__ == "__main__":
     #do_type = 'states'
  
     # Select columns for the analysis
-    columns = ['deaths_smooth']
-    #columns = ['confirmed_smooth']
+    #columns = ['deaths_smooth']
+    columns = ['confirmed_smooth']
     #columns = ['deaths_acceleration']
     #columns = ['confirmed_velocity']
     
     if do_type == 'countries':
         #countries = ['Sweden', 'Italy']
         #countries = ['Sweden', 'Finland', 'Norway', 'Japan', 'Austria', 'Switzerland', 'Germany', 'Spain', 'New Zealand']
-        countries = ['Finland', 'Norway', 'Japan', 'New Zealand', 'Australia', 'Israel']
+        #countries = ['Finland', 'Norway', 'Japan', 'New Zealand', 'Australia', 'Israel', 'Sweden', 'Germany', 'Italy']
+        countries = ['France', 'Germany', 'Italy', 'Belgium', 'Sweden', 'Canada', 'Chile', 'Argentina']
 
         #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
         #        'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
@@ -257,7 +258,7 @@ if __name__ == "__main__":
     rd.init_data()
 
     # Set some parameters
-    n_smooth = 21
+    n_smooth = 14
     t_min = 100
     t_max =  354
 
