@@ -35,6 +35,35 @@ def forward_prediction(days_fwd=1, model=None, start=None):
     return fwd
 
 
+def correlate_shift(xdata_all=None, ydata_all=None, window=7, shift_min=7, shift_max=30):
+    """ Check for the correlation between a set of variables on the x axis (e.g. policy stringency) and y (e.g. deaths) """
+
+    npts_corr = shift_max - shift_min
+    correlation = np.zeros(npts_corr)
+    
+    # Loop on the shifted date - the x axis is taken from 0 to shift and the y axis from shift to the end
+    for shift in range(shift_min, shift_max):
+
+        # xdata_all and ydata_all are arrays of arrays containing all the countries
+        for xdata, ydata in zip(xdata_all, ydata_all):
+            x_shift = xdata[:-shift]
+            y_shift = xdata[shift:]
+            npts_days = len(x_shift)
+
+            # Now we will gather the data on a window basis
+            x_block = np.zeros(npts_days-window)
+            y_block = np.zeros(npts_days-window)
+
+            # At each day take a chunk of size "window" and take the mean value
+            for day in range(0, npts_days-window):
+                x_block[day] = x_shift[(day):(day+window)]
+                y_block[day] = y_shift[(day):(day+window)]
+
+#scipy.stats.pearsonr()
+
+    return correlation
+
+
 def compare_curves(countries=None, normalize=True, columns=None, n_smooth=7, t_max=320, t_min=250, n_days=1, show=True, do_type='countries', invert=False):
     """ Fit data from various countries/regions to Gompertz curve """
 
@@ -197,8 +226,8 @@ if __name__ == "__main__":
     #do_type = 'states'
  
     # Select columns for the analysis
-    #columns = ['deaths_smooth']
-    columns = ['confirmed_smooth']
+    columns = ['deaths_smooth']
+    #columns = ['confirmed_smooth']
     #columns = ['deaths_acceleration']
     #columns = ['confirmed_velocity']
     
@@ -206,37 +235,14 @@ if __name__ == "__main__":
         #countries = ['Sweden', 'Italy']
         #countries = ['Sweden', 'Finland', 'Norway', 'Japan', 'Austria', 'Switzerland', 'Germany', 'Spain', 'New Zealand']
         #countries = ['Finland', 'Norway', 'Japan', 'New Zealand', 'Australia', 'Israel', 'Sweden', 'Germany', 'Italy']
-        countries = ['France', 'Germany', 'Italy', 'Belgium', 'Sweden', 'Canada', 'Chile', 'Argentina']
-
-        #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Slovakia', 'Argentina', 'Chile', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
-        #        'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Belarus', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
-         #       'Croatia', 'Mexico', 'Armenia', 'Qatar', 'Panama', 'France', 'Moldova']
+        #countries = ['France', 'Germany', 'Italy', 'Belgium', 'Sweden', 'United Kingdom', 'Brazil']
         #countries = ['Italy', 'Belgium', 'Sweden', 'Uruguay', 'Brazil', 'Peru', 'Norway', 'Finland', 'Israel', 'Argentina', 'Germany', 'Poland', 'Greece', 'Spain', 'Portugal', 
-         #       'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria', 
-          #      'Croatia', 'Mexico', 'Qatar', 'Panama', 'Moldova']
+        #'Japan', 'Vietnam', 'Luxembourg', 'United Kingdom', 'Slovenia', 'Serbia', 'Ukraine', 'Colombia', 'Turkey', 'Russia', 'Denmark', 'Malta' , 'Switzerland', 'Austria'] 
 
-        #countries = ['Italy', 'Czechia', 'Slovakia', 'Germany', 'Belgium', 'Sweden'] 
-        #countries = ['Italy', 'Belgium', 'Norway', 'Finland', 'Slovakia', 'Germany', 'France', 'Netherlands'] 
-        #countries = ['Sweden', 'Italy', 'Germany']
-        #countries = ['Switzerland', 'Hungary', 'Austria']
-
-
-        #countries.append('Japan')
-        #countries.append('United Kingdom')
-        #countries.append('Sweden')
-        #countries.append('Denmark')
-        #countries.append('Serbia')
-        #countries.append('France')
-        #countries.append('Slovakia')
-        #countries.append('Slovenia')
-        #countries.append('Italy')
-
-        #countries.append('Peru')
-        #countries.append('Switzerland')
-        #countries.append('Norway')
-        #countries.append('Finland')
-        #countries.append('Belgium')
-        #countries.append('Denmark')
+        #countries = ['Brazil', 'Italy', 'Belgium', 'France', 'Sweden', 'Chile', 'Israel']
+        countries = ['Brazil', 'Colombia', 'Argentina', 'Chile', 'Peru', 'Portugal',  'Spain']
+        #countries = ['Japan', 'Vietnam', 'Laos', 'Cambodia']
+        #countries = ['Thailand', 'Vietnam', 'Laos', 'Cambodia']
 
     # US States
     elif do_type == 'states':
@@ -259,8 +265,8 @@ if __name__ == "__main__":
 
     # Set some parameters
     n_smooth = 14
-    t_min = 100
-    t_max =  354
+    t_min = 50
+    t_max =  400
 
     invert = True
     show = True
